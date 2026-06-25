@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Form;
 use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +15,11 @@ class UserController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $users = User::latest()->paginate($request->per_page ?? 15);
+        if ($request->boolean('all')) {
+            $users = User::latest()->get();
+        } else {
+            $users = User::latest()->paginate($request->per_page ?? 15);
+        }
 
         return response()->json([
             'success' => true,
@@ -29,7 +34,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => ['required', Rule::in(['super_admin', 'admin', 'operator', 'viewer'])],
+            'role' => ['required', Rule::in(['super_admin', 'admin'])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
         ]);
@@ -58,7 +63,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'sometimes|string|min:8',
-            'role' => ['sometimes', Rule::in(['super_admin', 'admin', 'operator', 'viewer'])],
+            'role' => ['sometimes', Rule::in(['super_admin', 'admin'])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
         ]);
@@ -101,6 +106,20 @@ class UserController extends Controller
             'success' => true,
             'data' => null,
             'message' => 'User berhasil dihapus.',
+        ]);
+    }
+
+    public function forms(Request $request, User $user): JsonResponse
+    {
+        $forms = Form::where('user_id', $user->id)
+            ->withCount(['fields', 'submissions'])
+            ->latest()
+            ->paginate($request->per_page ?? 15);
+
+        return response()->json([
+            'success' => true,
+            'data' => $forms,
+            'message' => 'Daftar form user berhasil diambil.',
         ]);
     }
 }

@@ -9,19 +9,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('forms', function (Blueprint $table) {
-            if (!Schema::hasColumn('forms', 'starts_at')) {
+            if (! Schema::hasColumn('forms', 'starts_at')) {
                 $table->timestamp('starts_at')->nullable()->after('settings');
             }
-            if (!Schema::hasColumn('forms', 'collect_ip')) {
+            if (! Schema::hasColumn('forms', 'collect_ip')) {
                 $table->boolean('collect_ip')->default(true)->after('max_submissions');
             }
-            if (!Schema::hasColumn('forms', 'show_kbb_logo')) {
+            if (! Schema::hasColumn('forms', 'show_kbb_logo')) {
                 $table->boolean('show_kbb_logo')->default(true)->after('collect_ip');
             }
-            if (!Schema::hasColumn('forms', 'limit_one_response')) {
+            if (! Schema::hasColumn('forms', 'limit_one_response')) {
                 $table->boolean('limit_one_response')->default(false)->after('confirmation_message');
             }
-            if (!Schema::hasColumn('forms', 'confirmation_type')) {
+            if (! Schema::hasColumn('forms', 'confirmation_type')) {
                 $table->string('confirmation_type', 20)->default('message')->after('limit_one_response');
             }
         });

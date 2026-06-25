@@ -9,12 +9,12 @@ class FormPolicy
 {
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['super_admin', 'admin', 'operator', 'viewer']);
+        return in_array($user->role->value, ['super_admin', 'admin']);
     }
 
     public function view(User $user, Form $form): bool
     {
-        return $user->role === 'super_admin' || $user->id === $form->user_id;
+        return $user->role->value === 'super_admin' || $user->id === $form->user_id;
     }
 
     public function create(User $user): bool
@@ -24,11 +24,11 @@ class FormPolicy
 
     public function update(User $user, Form $form): bool
     {
-        return $user->role === 'super_admin' || $user->id === $form->user_id;
+        return $user->role->value === 'super_admin' || $user->id === $form->user_id;
     }
 
     public function delete(User $user, Form $form): bool
     {
-        return $user->role === 'super_admin' || $user->id === $form->user_id;
+        return $user->role->value === 'super_admin' || $user->id === $form->user_id;
     }
 }

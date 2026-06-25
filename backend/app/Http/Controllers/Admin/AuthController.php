@@ -22,11 +22,13 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            if ($user->role !== 'super_admin') {
+            if ($user->role->value !== 'super_admin') {
                 Auth::logout();
+
                 return back()->withErrors(['email' => 'Hanya Super Admin yang dapat mengakses panel ini.']);
             }
             $request->session()->regenerate();
+
             return redirect()->intended(route('admin.dashboard'));
         }
 
@@ -38,6 +40,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect(route('admin.login'));
     }
 }

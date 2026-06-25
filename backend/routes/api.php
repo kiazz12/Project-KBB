@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/v1/forms/{form}/close', [FormCrudController::class, 'close'])->whereNumber('form');
     Route::get('/v1/forms/{form}/analytics', [FormCrudController::class, 'analytics'])->whereNumber('form');
     Route::get('/v1/forms/{form}/export/csv', [FormCrudController::class, 'exportCsv'])->whereNumber('form');
+    Route::get('/v1/forms/{form}/export/pdf', [FormCrudController::class, 'exportPdf'])->whereNumber('form');
 
     Route::post('/v1/forms/{form}/fields', [FieldController::class, 'store'])->whereNumber('form');
     Route::put('/v1/forms/{form}/fields/{field}', [FieldController::class, 'update'])->whereNumber('form');
@@ -44,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:super_admin')->group(function () {
         Route::get('/v1/users', [UserController::class, 'index']);
         Route::post('/v1/users', [UserController::class, 'store']);
+        Route::get('/v1/users/{user}/forms', [UserController::class, 'forms'])->whereNumber('user');
         Route::put('/v1/users/{user}', [UserController::class, 'update']);
         Route::delete('/v1/users/{user}', [UserController::class, 'destroy']);
     });

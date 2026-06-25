@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::command('backup:run --frequency=daily')->daily();
+Schedule::command('backup:run --frequency=weekly')->weekly();
+Schedule::command('backup:run --frequency=monthly')->monthly();
+Schedule::command('backup:run --frequency=yearly')->yearly();

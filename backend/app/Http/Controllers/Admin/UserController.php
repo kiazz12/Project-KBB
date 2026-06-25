@@ -14,6 +14,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::latest()->paginate(20);
+
         return view('admin.users.index', compact('users'));
     }
 
@@ -28,7 +29,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => ['required', Rule::in(['super_admin', 'admin', 'operator', 'viewer'])],
+            'role' => ['required', Rule::in(['super_admin', 'admin'])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
         ]);
@@ -58,7 +59,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'nullable|string|min:8',
-            'role' => ['sometimes', Rule::in(['super_admin', 'admin', 'operator', 'viewer'])],
+            'role' => ['sometimes', Rule::in(['super_admin', 'admin'])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
         ]);

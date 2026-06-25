@@ -4,9 +4,9 @@ namespace App\Models;
 
 use App\Enums\FormStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Form extends Model
 {
@@ -21,7 +21,7 @@ class Form extends Model
         'status',
         'settings',
         'starts_at',
-        'expires_at',
+        'ends_at',
         'max_submissions',
         'require_auth',
         'collect_ip',
@@ -43,7 +43,7 @@ class Form extends Model
         return [
             'settings' => 'array',
             'starts_at' => 'datetime',
-            'expires_at' => 'datetime',
+            'ends_at' => 'datetime',
             'require_auth' => 'boolean',
             'collect_ip' => 'boolean',
             'show_kbb_logo' => 'boolean',
@@ -86,8 +86,7 @@ class Form extends Model
 
     public function isExpired(): bool
     {
-        $date = $this->expires_at ?? $this->ends_at ?? null;
-        return $date && $date->isPast();
+        return $this->ends_at && $this->ends_at->isPast();
     }
 
     public function isFull(): bool

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Form;
-use App\Models\FormField;
 use App\Models\FormSubmission;
 use App\Models\SubmissionData;
 use App\Services\AuditService;
@@ -161,6 +160,23 @@ class SubmissionApiController extends Controller
         }
 
         $validated = $request->validate($rules);
+
+        if ($form->settings['require_email'] ?? false) {
+            $hasEmail = false;
+            foreach ($form->fields as $field) {
+                if ($field->type->value === 'email' && ! empty($validated["field_{$field->id}"])) {
+                    $hasEmail = true;
+                    break;
+                }
+            }
+            if (! $hasEmail) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message' => 'Email wajib diisi.',
+                ], 422);
+            }
+        }
 
         $submission = FormSubmission::create([
             'uuid' => (string) Str::uuid(),

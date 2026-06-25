@@ -43,8 +43,6 @@
                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 <option value="super_admin" {{ old('role', $user->role ?? '') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                 <option value="admin" {{ old('role', $user->role ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
-                <option value="operator" {{ old('role', $user->role ?? '') === 'operator' ? 'selected' : '' }}>Operator</option>
-                <option value="viewer" {{ old('role', $user->role ?? '') === 'viewer' ? 'selected' : '' }}>Viewer</option>
             </select>
         </div>
 

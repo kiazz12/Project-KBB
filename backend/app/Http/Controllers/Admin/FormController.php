@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Form;
-use App\Models\FormSubmission;
 use Illuminate\Http\Request;
 
 class FormController extends Controller
@@ -16,9 +15,9 @@ class FormController extends Controller
         if ($search = $request->search) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -27,6 +26,7 @@ class FormController extends Controller
         }
 
         $forms = $query->latest()->paginate(20);
+
         return view('admin.forms.index', compact('forms'));
     }
 
@@ -34,6 +34,7 @@ class FormController extends Controller
     {
         $form->loadCount('submissions');
         $submissions = $form->submissions()->with('data.formField')->latest()->paginate(20);
+
         return view('admin.forms.show', compact('form', 'submissions'));
     }
 }

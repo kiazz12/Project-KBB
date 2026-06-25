@@ -32,7 +32,7 @@
                         <td class="px-5 py-4 font-medium text-gray-900">{{ $user->name }}</td>
                         <td class="px-5 py-4 text-gray-500">{{ $user->email }}</td>
                         <td class="px-5 py-4">
-                            <span class="text-xs px-2 py-0.5 rounded-full {{ $user->role === 'super_admin' ? 'bg-amber-100 text-amber-700' : ($user->role === 'admin' ? 'bg-blue-100 text-blue-700' : ($user->role === 'operator' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')) }}">
+                            <span class="text-xs px-2 py-0.5 rounded-full {{ $user->role === 'super_admin' ? 'bg-amber-100 text-amber-700' : ($user->role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500') }}">
                                 {{ str_replace('_', ' ', $user->role) }}
                             </span>
                         </td>

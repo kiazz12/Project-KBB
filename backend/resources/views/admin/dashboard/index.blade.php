@@ -92,13 +92,13 @@
                 @foreach ($usersByRole as $item)
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="w-2 h-2 rounded-full {{ $item->role === 'super_admin' ? 'bg-amber-400' : ($item->role === 'admin' ? 'bg-blue-400' : ($item->role === 'operator' ? 'bg-green-400' : 'bg-gray-400')) }}"></div>
+                            <div class="w-2 h-2 rounded-full {{ $item->role === 'super_admin' ? 'bg-amber-400' : ($item->role === 'admin' ? 'bg-blue-400' : 'bg-gray-400') }}"></div>
                             <span class="text-sm capitalize text-gray-700">{{ str_replace('_', ' ', $item->role) }}</span>
                         </div>
                         <span class="text-sm font-semibold text-gray-900">{{ $item->total }}</span>
                     </div>
                     <div class="w-full bg-gray-100 rounded-full h-1.5">
-                        <div class="h-1.5 rounded-full {{ $item->role === 'super_admin' ? 'bg-amber-400' : ($item->role === 'admin' ? 'bg-blue-400' : ($item->role === 'operator' ? 'bg-green-400' : 'bg-gray-400')) }}" style="width: {{ $totalUsers > 0 ? ($item->total / $totalUsers) * 100 : 0 }}%"></div>
+                        <div class="h-1.5 rounded-full {{ $item->role === 'super_admin' ? 'bg-amber-400' : ($item->role === 'admin' ? 'bg-blue-400' : 'bg-gray-400') }}" style="width: {{ $totalUsers > 0 ? ($item->total / $totalUsers) * 100 : 0 }}%"></div>
                     </div>
                 @endforeach
             </div>

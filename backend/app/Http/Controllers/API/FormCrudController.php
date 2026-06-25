@@ -4,8 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Form;
-use App\Models\FormSubmission;
 use App\Services\AuditService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -16,14 +16,16 @@ class FormCrudController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Form::withCount(['fields', 'submissions']);
-        if ($request->user()->role !== 'super_admin') {
+        if ($request->user()->role->value === 'super_admin') {
+            $query->with('user:id,name');
+        } else {
             $query->where('user_id', $request->user()->id);
         }
 
         if ($search = $request->search) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -46,6 +48,15 @@ class FormCrudController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'settings' => 'nullable|array',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after:starts_at',
+            'max_submissions' => 'nullable|integer|min:1',
+            'require_auth' => 'boolean',
+            'collect_ip' => 'boolean',
+            'show_kbb_logo' => 'boolean',
+            'confirmation_message' => 'nullable|string',
+            'limit_one_response' => 'boolean',
+            'confirmation_type' => 'nullable|string|in:message,redirect',
         ]);
 
         $defaultSettings = [
@@ -57,7 +68,7 @@ class FormCrudController extends Controller
 
         $settings = array_merge($defaultSettings, $request->settings ?? []);
 
-        $slug = Str::slug($request->title) . '-' . Str::random(6);
+        $slug = Str::slug($request->title).'-'.Str::random(6);
 
         $form = Form::create([
             'uuid' => (string) Str::uuid(),
@@ -66,6 +77,12 @@ class FormCrudController extends Controller
             'description' => $request->description,
             'slug' => $slug,
             'settings' => $settings,
+            'starts_at' => $request->starts_at,
+            'ends_at' => $request->ends_at,
+            'max_submissions' => $request->max_submissions,
+            'require_auth' => $request->require_auth ?? false,
+            'collect_ip' => $request->collect_ip ?? false,
+            'show_kbb_logo' => $request->show_kbb_logo ?? true,
             'confirmation_message' => $request->confirmation_message ?? $defaultSettings['confirmation_message'],
             'limit_one_response' => $request->limit_one_response ?? false,
             'confirmation_type' => $request->confirmation_type ?? $defaultSettings['confirmation_type'],
@@ -102,7 +119,7 @@ class FormCrudController extends Controller
             'description' => 'nullable|string',
             'settings' => 'nullable|array',
             'starts_at' => 'nullable|date',
-            'expires_at' => 'nullable|date|after:starts_at',
+            'ends_at' => 'nullable|date|after:starts_at',
             'max_submissions' => 'nullable|integer|min:1',
             'require_auth' => 'boolean',
             'collect_ip' => 'boolean',
@@ -114,7 +131,7 @@ class FormCrudController extends Controller
 
         $old = $form->toArray();
         $form->update($request->only([
-            'title', 'description', 'settings', 'starts_at', 'expires_at',
+            'title', 'description', 'settings', 'starts_at', 'ends_at',
             'max_submissions', 'require_auth', 'collect_ip', 'show_kbb_logo',
             'confirmation_message', 'limit_one_response', 'confirmation_type',
         ]));
@@ -149,8 +166,8 @@ class FormCrudController extends Controller
 
         $newForm = $form->replicate(['uuid', 'slug', 'created_at', 'updated_at']);
         $newForm->uuid = (string) Str::uuid();
-        $newForm->slug = Str::slug($form->title) . '-' . Str::random(6);
-        $newForm->title = $form->title . ' (Copy)';
+        $newForm->slug = Str::slug($form->title).'-'.Str::random(6);
+        $newForm->title = $form->title.' (Copy)';
         $newForm->status = 'draft';
         $newForm->save();
 
@@ -273,5 +290,21 @@ class FormCrudController extends Controller
         return response()->streamDownload($callback, "{$form->slug}-submissions.csv", [
             'Content-Type' => 'text/csv',
         ]);
+    }
+
+    public function exportPdf(Request $request, Form $form): mixed
+    {
+        $this->authorize('view', $form);
+
+        $fields = $form->fields()->orderBy('order')->get();
+        $submissions = $form->submissions()->with('data')->latest()->get();
+
+        $pdf = Pdf::loadView('exports.submissions-pdf', [
+            'form' => $form,
+            'fields' => $fields,
+            'submissions' => $submissions,
+        ]);
+
+        return $pdf->download("{$form->slug}-submissions.pdf");
     }
 }

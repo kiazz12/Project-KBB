@@ -11,6 +11,7 @@ class FormField extends Model
 {
     protected $fillable = [
         'form_id',
+        'section_id',
         'type',
         'label',
         'placeholder',
@@ -37,6 +38,11 @@ class FormField extends Model
     public function form(): BelongsTo
     {
         return $this->belongsTo(Form::class);
+    }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(FormSection::class, 'section_id');
     }
 
     public function submissionData(): HasMany

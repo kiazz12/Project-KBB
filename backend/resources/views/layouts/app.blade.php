@@ -58,6 +58,11 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     Admin Panel
                 </a>
+                <a href="{{ route('notifications.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('notifications.*') ? 'bg-kbb-50 text-kbb-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    Notifikasi
+                </a>
                 @endif
                 <a href="{{ route('change-password') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('change-password') ? 'bg-kbb-50 text-kbb-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
@@ -85,7 +90,10 @@
                 <button onclick="document.getElementById('sidebar').classList.toggle('-ml-64')" class="text-gray-400 hover:text-gray-600 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
-                <h1 class="text-lg font-semibold text-gray-900">@yield('title', 'Dashboard')</h1>
+                <h1 class="text-lg font-semibold text-gray-900 flex-1">@yield('title', 'Dashboard')</h1>
+                @auth
+                    @livewire('notification-bell')
+                @endauth
             </div>
             <div class="max-w-7xl mx-auto px-6 py-8">
                 @if (session('success'))
@@ -106,6 +114,24 @@
             </div>
         </main>
     </div>
+
+    @if (session('sessions_terminated'))
+        <div id="sessions-terminated-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center animate-bounce-in">
+                <div class="w-14 h-14 mx-auto mb-4 bg-amber-100 rounded-2xl flex items-center justify-center">
+                    <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9.364-7.364A9 9 0 1112 3a9 9 0 017.364 4.636z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Session Diterminasi</h3>
+                <p class="text-sm text-gray-600 mb-6">{{ session('sessions_terminated') }}</p>
+                <button onclick="this.closest('#sessions-terminated-modal').remove()" class="w-full bg-kbb-700 hover:bg-kbb-800 text-white font-medium py-2.5 rounded-lg transition">Mengerti</button>
+            </div>
+        </div>
+        <style>
+            @keyframes bounceIn { 0%{transform:scale(0.9);opacity:0} 50%{transform:scale(1.02)} 100%{transform:scale(1);opacity:1} }
+            .animate-bounce-in { animation: bounceIn 0.3s ease-out; }
+        </style>
+    @endif
+
     @livewireScripts
 </body>
 </html>

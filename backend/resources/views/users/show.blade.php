@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', $user->name)
+
 @section('content')
 <div class="flex items-center gap-3 mb-6">
     <a href="{{ route('users.index') }}" class="text-gray-400 hover:text-gray-600 transition">

@@ -62,6 +62,16 @@ class Form extends Model
         return $this->hasMany(FormField::class)->orderBy('order');
     }
 
+    public function sections(): HasMany
+    {
+        return $this->hasMany(FormSection::class)->orderBy('order');
+    }
+
+    public function getSectionsEnabledAttribute(): bool
+    {
+        return $this->sections()->exists();
+    }
+
     public function submissions(): HasMany
     {
         return $this->hasMany(FormSubmission::class);

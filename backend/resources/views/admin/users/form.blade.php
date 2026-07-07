@@ -21,26 +21,26 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
             <input type="text" name="name" value="{{ old('name', $user->name ?? '') }}" required
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none transition">
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input type="email" name="email" value="{{ old('email', $user->email ?? '') }}" required
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none transition">
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input type="password" name="password" {{ !isset($user) ? 'required' : '' }}
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none transition"
                 placeholder="{{ isset($user) ? 'Kosongkan jika tidak diganti' : '' }}">
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
             <select name="role" required
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none transition">
                 <option value="super_admin" {{ old('role', $user->role?->value ?? '') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                 <option value="admin" {{ old('role', $user->role?->value ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
             </select>
@@ -49,17 +49,17 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">NIP</label>
             <input type="text" name="nip" value="{{ old('nip', $user->nip ?? '') }}"
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none transition">
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">OPD</label>
             <input type="text" name="opd" value="{{ old('opd', $user->opd ?? '') }}"
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none transition">
         </div>
 
         <div class="flex justify-end pt-2">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg transition">
+            <button type="submit" class="bg-kbb-700 hover:bg-kbb-800 text-white font-medium px-6 py-2.5 rounded-lg transition">
                 {{ isset($user) ? 'Simpan Perubahan' : 'Buat User' }}
             </button>
         </div>

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', $form->title)
+
 @section('content')
 <div class="flex items-center gap-3 mb-6">
     <a href="{{ route('forms.index') }}" class="text-gray-400 hover:text-gray-600 transition">
@@ -10,6 +12,7 @@
         <p class="text-sm text-gray-500 mt-1">
             <span class="{{ $form->status === 'published' ? 'text-emerald-600' : ($form->status === 'closed' ? 'text-red-500' : 'text-gray-400') }}">{{ $form->status }}</span>
             · {{ $form->fields_count }} fields · {{ $form->submissions_count }} responses
+            @if($form->sections_count > 0) · {{ $form->sections_count }} sections @endif
         </p>
     </div>
     <div class="flex items-center gap-2">

@@ -21,10 +21,37 @@
             }
         }
     </script>
+    <style>
+        .blob-1 { animation: float1 20s ease-in-out infinite; }
+        .blob-2 { animation: float2 25s ease-in-out infinite; }
+        .blob-3 { animation: float3 18s ease-in-out infinite; }
+        .blob-4 { animation: float1 22s ease-in-out infinite reverse; }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -40px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-40px, -20px) scale(1.15); }
+            66% { transform: translate(30px, 30px) scale(0.85); }
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(20px, 40px) scale(0.9); }
+            66% { transform: translate(-30px, -10px) scale(1.1); }
+        }
+    </style>
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-kbb-600 via-kbb-700 to-kbb-900">
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-kbb-600 via-kbb-700 to-kbb-900 overflow-hidden relative">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="blob-1 absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-kbb-400/20 to-transparent blur-3xl"></div>
+        <div class="blob-2 absolute -bottom-40 -right-32 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-gold-400/15 to-transparent blur-3xl"></div>
+        <div class="blob-3 absolute top-1/3 -right-20 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-kbb-300/15 to-transparent blur-3xl"></div>
+        <div class="blob-4 absolute bottom-1/4 -left-20 w-[350px] h-[350px] rounded-full bg-gradient-to-br from-gold-300/10 to-transparent blur-3xl"></div>
+    </div>
     @yield('content')
     @livewireScripts
 </body>

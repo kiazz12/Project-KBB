@@ -19,10 +19,14 @@ class PublicForm extends Component
     public bool $submitted = false;
     public string $error = '';
 
+    public int $currentStep = 1;
+    public array $steps = [];
+    public int $totalSteps = 1;
+
     public function mount(string $slug): void
     {
         $this->slug = $slug;
-        $form = Form::with('fields')
+        $form = Form::with(['fields.section', 'sections'])
             ->where('slug', $slug)
             ->where('status', 'published')
             ->first();
@@ -43,11 +47,102 @@ class PublicForm extends Component
         }
 
         $this->form = $form;
+
+        $sections = $form->sections;
+        $noSectionFields = $form->fields->whereNull('section_id');
+
+        if ($sections->isEmpty()) {
+            $this->steps = [['title' => 'Form', 'fields' => $form->fields]];
+            $this->totalSteps = 1;
+        } else {
+            $this->steps = [];
+            foreach ($sections as $section) {
+                $this->steps[] = [
+                    'title' => $section->title,
+                    'fields' => $form->fields->where('section_id', $section->id),
+                ];
+            }
+            if ($noSectionFields->isNotEmpty()) {
+                $this->steps[] = [
+                    'title' => 'Lainnya',
+                    'fields' => $noSectionFields,
+                ];
+            }
+            $this->totalSteps = count($this->steps);
+        }
     }
 
     public function render()
     {
         return view('livewire.public-form');
+    }
+
+    public function nextStep(): void
+    {
+        if ($this->currentStep < $this->totalSteps) {
+            $this->validateStep($this->currentStep);
+            $this->currentStep++;
+        }
+    }
+
+    public function prevStep(): void
+    {
+        if ($this->currentStep > 1) {
+            $this->currentStep--;
+        }
+    }
+
+    private function validateStep(int $stepIndex): void
+    {
+        $step = $this->steps[$stepIndex - 1] ?? null;
+        if (!$step) return;
+
+        $rules = [];
+        $messages = [];
+
+        foreach ($step['fields'] as $field) {
+            $key = "responses.{$field->id}";
+            $fieldRules = [];
+
+            if (in_array($field->type->value, ['file', 'signature'])) {
+                if ($field->required) {
+                    $fieldRules[] = 'required';
+                }
+                if ($field->type->value === 'file') {
+                    $fieldRules[] = 'file';
+                    $fieldRules[] = 'max:2048';
+                    $fieldRules[] = 'mimes:jpg,jpeg,png,pdf,doc,docx';
+                }
+            } else {
+                if ($field->required) {
+                    $fieldRules[] = 'required';
+                }
+                $fieldRules[] = match ($field->type->value) {
+                    'email' => 'email',
+                    'number' => 'numeric',
+                    default => 'string',
+                };
+                if ($field->min_length) $fieldRules[] = "min:{$field->min_length}";
+                if ($field->max_length) $fieldRules[] = "max:{$field->max_length}";
+            }
+
+            if (!empty($fieldRules)) {
+                $rules[$key] = implode('|', $fieldRules);
+            }
+
+            if ($field->required) {
+                $messages["{$key}.required"] = "{$field->label} wajib diisi.";
+            }
+            if ($field->type->value === 'file') {
+                $messages["{$key}.file"] = "{$field->label} harus berupa file.";
+                $messages["{$key}.mimes"] = "{$field->label} harus berupa file JPG, PNG, atau PDF.";
+                $messages["{$key}.max"] = "{$field->label} maksimal 2MB.";
+            }
+        }
+
+        if (!empty($rules)) {
+            $this->validate($rules, $messages);
+        }
     }
 
     public function submitForm(): void

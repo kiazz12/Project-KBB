@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\User;
+use App\Services\AuditService;
+use App\Services\SessionLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -27,6 +30,7 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('api-token')->plainTextToken;
+        SessionLimitService::limitTokens($user);
 
         return response()->json([
             'success' => true,
@@ -78,6 +82,17 @@ class AuthController extends Controller
         $user->update([
             'password' => Hash::make($request->new_password),
         ]);
+
+        AuditService::log('password.changed', $user, "User '{$user->name}' changed password via API");
+
+        User::where('role', 'super_admin')->get()->each(fn($sa) =>
+            Notification::create([
+                'user_id' => $sa->id,
+                'type' => 'password_changed',
+                'message' => "Admin {$user->name} ({$user->email}) mengubah password akun mereka.",
+                'data' => ['admin_id' => $user->id, 'admin_name' => $user->name, 'admin_email' => $user->email],
+            ])
+        );
 
         return response()->json([
             'success' => true,

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Form;
 use App\Models\FormField;
+use App\Models\FormSection;
 use App\Services\AuditService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +24,7 @@ class FormEditor extends Component
     public string $fieldHelpText = '';
     public bool $fieldRequired = false;
     public string $fieldOptionsText = '';
+    public ?int $fieldSectionId = null;
 
     public string $settingsTitle = '';
     public string $settingsDescription = '';
@@ -39,6 +41,13 @@ class FormEditor extends Component
 
     public string $message = '';
     public string $messageType = 'success';
+    public bool $showPublishModal = false;
+    public string $publishedUrl = '';
+
+    public ?int $editingSectionId = null;
+    public string $sectionTitle = '';
+    public string $sectionDescription = '';
+    public bool $showSectionForm = false;
 
     protected function rules()
     {
@@ -55,7 +64,7 @@ class FormEditor extends Component
 
     public function mount(Form $form): void
     {
-        $this->form = $form->load('fields');
+        $this->form = $form->load(['fields.section', 'sections']);
         $this->settingsTitle = $form->title;
         $this->settingsDescription = $form->description ?? '';
         $this->settingsStartsAt = $form->starts_at?->format('Y-m-d\TH:i');
@@ -72,7 +81,7 @@ class FormEditor extends Component
 
     public function render()
     {
-        $this->form->load('fields');
+        $this->form->load(['fields.section', 'sections']);
         return view('livewire.form-editor')
             ->layout('layouts.app');
     }
@@ -84,6 +93,10 @@ class FormEditor extends Component
 
     public function editField(int $fieldId): void
     {
+        if ($fieldId === -1) {
+            $this->resetFieldForm();
+            return;
+        }
         $field = $this->form->fields()->findOrFail($fieldId);
         $this->editingFieldId = $fieldId;
         $this->fieldType = $field->type->value;
@@ -92,6 +105,7 @@ class FormEditor extends Component
         $this->fieldHelpText = $field->help_text ?? '';
         $this->fieldRequired = $field->required ?? false;
         $this->fieldOptionsText = $field->options ? implode("\n", $field->options) : '';
+        $this->fieldSectionId = $field->section_id;
     }
 
     public function cancelEdit(): void
@@ -121,6 +135,7 @@ class FormEditor extends Component
             'help_text' => $this->fieldHelpText,
             'required' => $this->fieldRequired,
             'options' => $options,
+            'section_id' => $this->fieldSectionId ?: null,
         ];
 
         if ($this->editingFieldId) {
@@ -204,8 +219,13 @@ class FormEditor extends Component
     {
         $this->form->update(['status' => 'published']);
         AuditService::log('form_published', $this->form, "Form '{$this->form->title}' published");
-        $this->message = 'Form berhasil dipublikasikan.';
-        $this->messageType = 'success';
+        $this->publishedUrl = url('/form/' . $this->form->slug);
+        $this->showPublishModal = true;
+    }
+
+    public function closePublishModal(): void
+    {
+        $this->showPublishModal = false;
     }
 
     public function closeForm(): void
@@ -240,6 +260,105 @@ class FormEditor extends Component
         $this->messageType = 'success';
     }
 
+    public function addSection(): void
+    {
+        $this->editingSectionId = null;
+        $this->sectionTitle = '';
+        $this->sectionDescription = '';
+        $this->showSectionForm = true;
+    }
+
+    public function editSection(int $sectionId): void
+    {
+        $section = $this->form->sections()->findOrFail($sectionId);
+        $this->editingSectionId = $sectionId;
+        $this->sectionTitle = $section->title;
+        $this->sectionDescription = $section->description ?? '';
+        $this->showSectionForm = true;
+    }
+
+    public function cancelSection(): void
+    {
+        $this->showSectionForm = false;
+        $this->editingSectionId = null;
+        $this->sectionTitle = '';
+        $this->sectionDescription = '';
+    }
+
+    public function saveSection(): void
+    {
+        $this->validate([
+            'sectionTitle' => 'required|string|max:255',
+            'sectionDescription' => 'nullable|string|max:500',
+        ]);
+
+        if ($this->editingSectionId) {
+            $section = $this->form->sections()->findOrFail($this->editingSectionId);
+            $section->update([
+                'title' => $this->sectionTitle,
+                'description' => $this->sectionDescription,
+            ]);
+            AuditService::log('form_section_updated', $this->form, "Section '{$section->title}' updated");
+            $this->message = 'Section berhasil diperbarui.';
+        } else {
+            $maxOrder = $this->form->sections()->max('order') ?? 0;
+            FormSection::create([
+                'form_id' => $this->form->id,
+                'title' => $this->sectionTitle,
+                'description' => $this->sectionDescription,
+                'order' => $maxOrder + 1,
+            ]);
+            AuditService::log('form_section_created', $this->form, "Section '{$this->sectionTitle}' added");
+            $this->message = 'Section berhasil ditambahkan.';
+        }
+
+        $this->messageType = 'success';
+        $this->cancelSection();
+    }
+
+    public function deleteSection(int $sectionId): void
+    {
+        $section = $this->form->sections()->findOrFail($sectionId);
+        $title = $section->title;
+
+        $section->fields()->update(['section_id' => null]);
+
+        $section->delete();
+        AuditService::log('form_section_deleted', $this->form, "Section '{$title}' deleted");
+        $this->message = 'Section berhasil dihapus.';
+        $this->messageType = 'success';
+    }
+
+    public function moveSectionUp(int $sectionId): void
+    {
+        $sections = $this->form->sections()->orderBy('order')->get();
+        $index = $sections->search(fn($s) => $s->id === $sectionId);
+        if ($index === false || $index === 0) return;
+
+        $temp = $sections[$index];
+        $sections[$index] = $sections[$index - 1];
+        $sections[$index - 1] = $temp;
+
+        foreach ($sections as $i => $section) {
+            $section->update(['order' => $i + 1]);
+        }
+    }
+
+    public function moveSectionDown(int $sectionId): void
+    {
+        $sections = $this->form->sections()->orderBy('order')->get();
+        $index = $sections->search(fn($s) => $s->id === $sectionId);
+        if ($index === false || $index === $sections->count() - 1) return;
+
+        $temp = $sections[$index];
+        $sections[$index] = $sections[$index + 1];
+        $sections[$index + 1] = $temp;
+
+        foreach ($sections as $i => $section) {
+            $section->update(['order' => $i + 1]);
+        }
+    }
+
     private function resetFieldForm(): void
     {
         $this->editingFieldId = null;
@@ -249,5 +368,6 @@ class FormEditor extends Component
         $this->fieldHelpText = '';
         $this->fieldRequired = false;
         $this->fieldOptionsText = '';
+        $this->fieldSectionId = null;
     }
 }

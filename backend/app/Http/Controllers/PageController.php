@@ -26,12 +26,19 @@ class PageController extends Controller
 
         $totalForms = $isSuper ? Form::count() : Form::where('user_id', $userId)->count();
         $publishedForms = $isSuper ? Form::where('status', 'published')->count() : Form::where('user_id', $userId)->where('status', 'published')->count();
+        $draftForms = $isSuper ? Form::where('status', 'draft')->count() : Form::where('user_id', $userId)->where('status', 'draft')->count();
+        $closedForms = $isSuper ? Form::where('status', 'closed')->count() : Form::where('user_id', $userId)->where('status', 'closed')->count();
+
         $totalSubmissions = $isSuper
             ? \App\Models\FormSubmission::count()
             : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->count();
         $submissionsToday = $isSuper
             ? \App\Models\FormSubmission::whereDate('submitted_at', today())->count()
             : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereDate('submitted_at', today())->count();
+        $submissionsThisWeek = $isSuper
+            ? \App\Models\FormSubmission::whereBetween('submitted_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
+            : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereBetween('submitted_at', [now()->startOfWeek(), now()->endOfWeek()])->count();
+        $totalUsers = $isSuper ? User::count() : null;
 
         $recentForms = Form::withCount(['fields', 'submissions'])
             ->when(!$isSuper, fn($q) => $q->where('user_id', $userId))
@@ -39,7 +46,49 @@ class PageController extends Controller
             ->limit(5)
             ->get();
 
-        return view('dashboard.index', compact('totalForms', 'publishedForms', 'totalSubmissions', 'submissionsToday', 'recentForms'));
+        $topForms = Form::with('user:id,name')
+            ->withCount('submissions')
+            ->when(!$isSuper, fn($q) => $q->where('user_id', $userId))
+            ->whereHas('submissions')
+            ->orderByDesc('submissions_count')
+            ->limit(5)
+            ->get();
+
+        $latestSubmissions = \App\Models\FormSubmission::with(['form:id,title,user_id', 'form.user:id,name'])
+            ->whereIn('form_id', function ($q) use ($isSuper, $userId) {
+                if ($isSuper) {
+                    $q->select('id')->from('forms');
+                } else {
+                    $q->select('id')->from('forms')->where('user_id', $userId);
+                }
+            })
+            ->latest('submitted_at')
+            ->limit(6)
+            ->get();
+
+        $formsWithSubmissions = $isSuper
+            ? Form::where('status', 'published')->whereHas('submissions')->count()
+            : Form::where('user_id', $userId)->where('status', 'published')->whereHas('submissions')->count();
+        $avgSubsPerForm = $totalForms > 0 ? round($totalSubmissions / $totalForms, 1) : 0;
+
+        $weekDays = [];
+        $weekSubmissions = [];
+        foreach (range(6, 0) as $i) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $weekDays[] = now()->subDays($i)->translatedFormat('D');
+            $count = $isSuper
+                ? \App\Models\FormSubmission::whereDate('submitted_at', $date)->count()
+                : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereDate('submitted_at', $date)->count();
+            $weekSubmissions[] = $count;
+        }
+
+        return view('dashboard.index', compact(
+            'totalForms', 'publishedForms', 'draftForms', 'closedForms',
+            'totalSubmissions', 'submissionsToday', 'submissionsThisWeek',
+            'totalUsers', 'recentForms', 'topForms', 'latestSubmissions',
+            'formsWithSubmissions', 'avgSubsPerForm',
+            'weekDays', 'weekSubmissions'
+        ));
     }
 
     public function formsIndex(Request $request)
@@ -74,7 +123,7 @@ class PageController extends Controller
     public function formsShow(int $id)
     {
         $form = Form::with(['fields' => fn($q) => $q->orderBy('order')])
-            ->withCount(['fields', 'submissions'])
+            ->withCount(['fields', 'submissions', 'sections'])
             ->findOrFail($id);
         $this->authorize('view', $form);
 

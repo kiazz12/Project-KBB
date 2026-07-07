@@ -9,6 +9,7 @@ use App\Models\FormSubmission;
 use App\Models\SubmissionData;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DummyFormSeeder extends Seeder
@@ -24,8 +25,9 @@ class DummyFormSeeder extends Seeder
     protected static array $namaBelakang = ['Suparman', 'Wijaya', 'Kusuma', 'Pratama', 'Hidayat', 'Nugraha', 'Ramdhan', 'Fauzi', 'Hakim', 'Saputra', 'Maulana', 'Sudrajat', 'Permana', 'Suryana', 'Sofyan', 'Saepuloh', 'Rahayu', 'Handayani', 'Wulandari', 'Lestari', 'Mulyani', 'Susilawati', 'Hasanah', 'Maryati', 'Nurdin'];
 
     protected static array $alamat = [
-        'Kp. Cikembang RT 02/03, Desa', 'Jl. Raya Padalarang No.', 'Kp. Babakan RT 01/04, Desa', 'Perum KBB Indah Blok', 'Kp. Pasirhuni RT 03/02, Desa',
-        'Jl. Cipatat KM', 'Kp. Bojong RT 04/01, Desa', 'Gg. Melati No.', 'Kp. Cibodas RT 02/05, Desa', 'Jl. Raya Batujajar No.',
+        'Kp. Cikembang RT 02/03, Desa', 'Jl. Raya Padalarang No.', 'Kp. Babakan RT 01/04, Desa', 'Perum KBB Indah Blok',
+        'Kp. Pasirhuni RT 03/02, Desa', 'Jl. Cipatat KM', 'Kp. Bojong RT 04/01, Desa', 'Gg. Melati No.',
+        'Kp. Cibodas RT 02/05, Desa', 'Jl. Raya Batujajar No.',
     ];
 
     protected static array $namaBarang = [
@@ -61,45 +63,25 @@ class DummyFormSeeder extends Seeder
         'Toilet umum perlu lebih sering dibersihkan karena kurang terawat dan bau.',
     ];
 
-    public function run(): void
-    {
-        $users = User::where('role', 'admin')->take(5)->get();
-        if ($users->isEmpty()) return;
+    protected array $formDefs = [];
+    protected array $fieldSets = [];
 
-        $formDefs = [
-            [
-                'title'       => 'Pendataan Warga',
-                'description' => 'Formulir pendataan warga untuk keperluan administrasi kependudukan.',
-                'theme'       => 'kependudukan',
-                'count'       => 20,
-            ],
-            [
-                'title'       => 'Survey Kepuasan Masyarakat',
-                'description' => 'Survey untuk mengukur tingkat kepuasan masyarakat terhadap pelayanan publik.',
-                'theme'       => 'survey',
-                'count'       => 30,
-            ],
-            [
-                'title'       => 'Pendaftaran Kegiatan',
-                'description' => 'Formulir pendaftaran peserta kegiatan dan pelatihan.',
-                'theme'       => 'pendaftaran',
-                'count'       => 15,
-            ],
-            [
-                'title'       => 'Pengaduan Masyarakat',
-                'description' => 'Formulir untuk menyampaikan pengaduan, saran, dan masukan.',
-                'theme'       => 'pengaduan',
-                'count'       => 12,
-            ],
-            [
-                'title'       => 'Data Inventaris',
-                'description' => 'Formulir pencatatan inventaris barang dan aset daerah.',
-                'theme'       => 'inventaris',
-                'count'       => 10,
-            ],
+    public function __construct()
+    {
+        $this->formDefs = [
+            'kependudukan' => ['title' => 'Pendataan Warga', 'description' => 'Formulir pendataan warga untuk keperluan administrasi kependudukan.', 'count' => 10],
+            'survey'       => ['title' => 'Survey Kepuasan Masyarakat', 'description' => 'Survey untuk mengukur tingkat kepuasan masyarakat terhadap pelayanan publik.', 'count' => 12],
+            'pendaftaran'  => ['title' => 'Pendaftaran Kegiatan', 'description' => 'Formulir pendaftaran peserta kegiatan dan pelatihan.', 'count' => 8],
+            'pengaduan'    => ['title' => 'Pengaduan Masyarakat', 'description' => 'Formulir untuk menyampaikan pengaduan, saran, dan masukan.', 'count' => 6],
+            'inventaris'   => ['title' => 'Data Inventaris', 'description' => 'Formulir pencatatan inventaris barang dan aset daerah.', 'count' => 6],
+            'kegiatan'     => ['title' => 'Laporan Kegiatan Harian', 'description' => 'Laporan pelaksanaan kegiatan harian di lingkungan kecamatan.', 'count' => 8],
+            'tamu'         => ['title' => 'Buku Tamu', 'description' => 'Formulir pencatatan tamu yang berkunjung ke kantor.', 'count' => 15],
+            'izin'         => ['title' => 'Permohonan Izin', 'description' => 'Formulir permohonan izin kegiatan dan penggunaan fasilitas.', 'count' => 7],
+            'bantuan'      => ['title' => 'Data Penerima Bantuan', 'description' => 'Pendataan calon penerima bantuan sosial.', 'count' => 10],
+            'aset'         => ['title' => 'Peminjaman Aset', 'description' => 'Formulir peminjaman aset dan perlengkapan kantor.', 'count' => 5],
         ];
 
-        $fieldSets = [
+        $this->fieldSets = [
             'kependudukan' => [
                 ['type' => FieldType::Text,      'label' => 'NIK (Nomor Induk Kependudukan)', 'placeholder' => '16 digit NIK', 'required' => true],
                 ['type' => FieldType::Text,      'label' => 'Nama Lengkap',                   'placeholder' => 'Sesuai KTP', 'required' => true],
@@ -179,64 +161,194 @@ class DummyFormSeeder extends Seeder
                 ['type' => FieldType::Heading,   'label' => 'Dokumen Pendukung',              'help_text' => 'Upload foto/dokumen barang', 'required' => false],
                 ['type' => FieldType::File,      'label' => 'Upload Gambar/Dokumen',          'help_text' => 'Foto barang atau dokumen (PDF/JPG maks 2MB)', 'required' => false],
             ],
+
+            'kegiatan' => [
+                ['type' => FieldType::Text,      'label' => 'Nama Kegiatan',                  'placeholder' => 'Nama kegiatan yang dilaksanakan', 'required' => true],
+                ['type' => FieldType::Select,    'label' => 'Jenis Kegiatan',                 'required' => true,  'options' => ['Rapat', 'Sosialisasi', 'Pelatihan', 'Monitoring', 'Evaluasi', 'Lainnya']],
+                ['type' => FieldType::Date,      'label' => 'Tanggal Pelaksanaan',            'required' => true],
+                ['type' => FieldType::Time,      'label' => 'Jam Mulai',                      'placeholder' => 'Pilih jam', 'required' => true],
+                ['type' => FieldType::Time,      'label' => 'Jam Selesai',                    'placeholder' => 'Pilih jam', 'required' => true],
+                ['type' => FieldType::Textarea,  'label' => 'Deskripsi Kegiatan',             'placeholder' => 'Uraian kegiatan yang dilaksanakan', 'required' => true],
+                ['type' => FieldType::Number,    'label' => 'Jumlah Peserta',                 'placeholder' => 'Masukkan jumlah', 'required' => false],
+                ['type' => FieldType::Text,      'label' => 'Lokasi',                         'placeholder' => 'Tempat pelaksanaan', 'required' => true],
+                ['type' => FieldType::Radio,     'label' => 'Kesimpulan',                     'required' => true,  'options' => ['Tercapai', 'Tidak Tercapai']],
+                ['type' => FieldType::Textarea,  'label' => 'Tindak Lanjut',                  'placeholder' => 'Rencana tindak lanjut', 'required' => false],
+            ],
+
+            'tamu' => [
+                ['type' => FieldType::Text,      'label' => 'Nama Tamu',                      'placeholder' => 'Nama lengkap', 'required' => true],
+                ['type' => FieldType::Text,      'label' => 'Instansi/Perusahaan',            'placeholder' => 'Asal instansi', 'required' => true],
+                ['type' => FieldType::Select,    'label' => 'Tujuan Bertemu',                 'required' => true,  'options' => ['Kepala Dinas', 'Sekretaris', 'Kabid', 'Kasubag', 'Staff', 'Lainnya']],
+                ['type' => FieldType::Textarea,  'label' => 'Keperluan',                      'placeholder' => 'Tujuan kunjungan', 'required' => true],
+                ['type' => FieldType::Number,    'label' => 'Nomor Telepon',                  'placeholder' => '08xxxxxxxxxx', 'required' => true],
+                ['type' => FieldType::Email,     'label' => 'Email',                          'placeholder' => 'contoh@email.com', 'required' => false],
+                ['type' => FieldType::Date,      'label' => 'Tanggal Kunjungan',              'required' => true],
+                ['type' => FieldType::Time,      'label' => 'Jam Datang',                     'placeholder' => 'Pilih jam', 'required' => true],
+                ['type' => FieldType::Time,      'label' => 'Jam Pulang',                     'placeholder' => 'Pilih jam', 'required' => false],
+                ['type' => FieldType::File,      'label' => 'Upload KTP/Foto',                'help_text' => 'Upload foto/scan KTP', 'required' => false],
+            ],
+
+            'izin' => [
+                ['type' => FieldType::Text,      'label' => 'Nama Pemohon',                   'placeholder' => 'Nama lengkap', 'required' => true],
+                ['type' => FieldType::Text,      'label' => 'NIK',                            'placeholder' => '16 digit NIK', 'required' => true],
+                ['type' => FieldType::Select,    'label' => 'Jenis Izin',                     'required' => true,  'options' => ['Izin Keramaian', 'Izin Mendirikan Bangunan', 'Izin Usaha', 'Izin Parkir', 'Izin Kegiatan', 'Lainnya']],
+                ['type' => FieldType::Textarea,  'label' => 'Alamat',                         'placeholder' => 'Alamat lengkap', 'required' => true],
+                ['type' => FieldType::Textarea,  'label' => 'Maksud dan Tujuan',             'placeholder' => 'Tujuan pengajuan izin', 'required' => true],
+                ['type' => FieldType::Date,      'label' => 'Tanggal Mulai',                  'required' => true],
+                ['type' => FieldType::Date,      'label' => 'Tanggal Selesai',                'required' => true],
+                ['type' => FieldType::Number,    'label' => 'Estimasi Peserta',               'placeholder' => 'Perkiraan jumlah peserta', 'required' => false],
+                ['type' => FieldType::Checkbox,  'label' => 'Persyaratan',                    'required' => true,  'options' => ['KTP', 'Surat Pengantar', 'Surat Keterangan Domisili', 'Pas Foto']],
+                ['type' => FieldType::Signature, 'label' => 'Tanda Tangan',                  'help_text' => 'Tanda tangan elektronik', 'required' => true],
+            ],
+
+            'bantuan' => [
+                ['type' => FieldType::Text,      'label' => 'Nama Lengkap',                   'placeholder' => 'Nama calon penerima', 'required' => true],
+                ['type' => FieldType::Text,      'label' => 'NIK',                            'placeholder' => '16 digit NIK', 'required' => true],
+                ['type' => FieldType::Textarea,  'label' => 'Alamat',                         'placeholder' => 'Alamat lengkap', 'required' => true],
+                ['type' => FieldType::Number,    'label' => 'Jumlah Tanggungan',              'placeholder' => 'Jumlah anggota keluarga', 'required' => true],
+                ['type' => FieldType::Select,    'label' => 'Pekerjaan',                      'required' => true,  'options' => ['Tidak Bekerja', 'Buruh Harian', 'Petani', 'Pedagang Kecil', 'Pensiunan', 'Lainnya']],
+                ['type' => FieldType::Radio,     'label' => 'Status Rumah',                   'required' => true,  'options' => ['Milik Sendiri', 'Kontrak', 'Numpang', 'Tidak Layak Huni']],
+                ['type' => FieldType::Number,    'label' => 'Penghasilan per Bulan (Rp)',     'placeholder' => 'Dalam Rupiah', 'required' => true],
+                ['type' => FieldType::Select,    'label' => 'Jenis Bantuan',                  'required' => true,  'options' => ['Bantuan Sembako', 'Bantuan Tunai', 'Bantuan Kesehatan', 'Bantuan Pendidikan', 'Bantuan Rumah']],
+                ['type' => FieldType::Checkbox,  'label' => 'Kriteria Keluarga',              'required' => true,  'options' => ['Lansia', 'Disabilitas', 'Ibu Hamil', 'Balita', 'Sakit Kronis']],
+                ['type' => FieldType::Date,      'label' => 'Tanggal Pendataan',              'required' => true],
+            ],
+
+            'aset' => [
+                ['type' => FieldType::Select,    'label' => 'Jenis Aset',                     'required' => true,  'options' => ['Kendaraan', 'Elektronik', 'Furnitur', 'Alat Berat', 'Perlengkapan']],
+                ['type' => FieldType::Text,      'label' => 'Nama Aset',                      'placeholder' => 'Nama barang/aset', 'required' => true],
+                ['type' => FieldType::Text,      'label' => 'Kode Aset',                      'placeholder' => 'Kode inventaris', 'required' => false],
+                ['type' => FieldType::Text,      'label' => 'Nama Peminjam',                  'placeholder' => 'Nama lengkap', 'required' => true],
+                ['type' => FieldType::Text,      'label' => 'Bidang/Unit',                    'placeholder' => 'Unit kerja', 'required' => true],
+                ['type' => FieldType::Date,      'label' => 'Tanggal Pinjam',                 'required' => true],
+                ['type' => FieldType::Date,      'label' => 'Rencana Kembali',                'required' => true],
+                ['type' => FieldType::Textarea,  'label' => 'Keperluan',                      'placeholder' => 'Tujuan peminjaman', 'required' => true],
+                ['type' => FieldType::Radio,     'label' => 'Status',                         'required' => true,  'options' => ['Dipinjam', 'Dikembalikan']],
+                ['type' => FieldType::Signature, 'label' => 'Tanda Tangan',                  'help_text' => 'Tanda tangan peminjam', 'required' => true],
+            ],
         ];
+    }
 
-        foreach ($formDefs as $i => $def) {
-            $user = $users[$i];
-            $slug = 'dummy-' . $def['theme'] . '-' . Str::random(4);
+    public function run(): void
+    {
+        $users = User::all();
+        if ($users->isEmpty()) return;
 
-            $form = Form::create([
-                'uuid'        => Str::uuid(),
-                'user_id'     => $user->id,
-                'title'       => $def['title'],
-                'description' => $def['description'],
-                'slug'        => $slug,
-                'status'      => 'published',
-                'settings'    => [
-                    'collect_ip'       => true,
-                    'show_kbb_logo'    => true,
-                ],
-                'confirmation_message' => 'Terima kasih, data Anda berhasil dikirim.',
-                'confirmation_type'    => 'message',
-                'limit_one_response'   => false,
-            ]);
+        $this->command->info('— — — — — — — — — — — — — — — — — — — —');
+        $this->command->info('  DummyFormSeeder: Seeding ' . $users->count() . ' users');
+        $this->command->info('— — — — — — — — — — — — — — — — — — — —');
 
-            $fields = $fieldSets[$def['theme']];
+        $themeKeys = array_keys($this->formDefs);
+        $totalForms = 0;
+        $totalSubmissions = 0;
+        $allSubmissionData = [];
 
-            foreach ($fields as $j => $field) {
-                FormField::create(array_merge($field, [
-                    'form_id' => $form->id,
-                    'order'   => $j + 1,
-                ]));
-            }
+        DB::transaction(function () use ($users, $themeKeys, &$totalForms, &$totalSubmissions, &$allSubmissionData) {
+            $now = now();
 
-            $formFields = $form->fields()->get();
+            foreach ($users as $user) {
+                $numForms = mt_rand(2, 3);
+                $assignedThemes = [];
+                $available = $themeKeys;
+                shuffle($available);
 
-            $submissionCount = $def['count'];
-            $this->command->info("Form created: {$form->title} (owner: {$user->name}, slug: {$form->slug}, {$formFields->count()} fields) — generating {$submissionCount} submissions...");
+                for ($f = 0; $f < $numForms; $f++) {
+                    $theme = $available[$f % count($available)];
+                    $assignedThemes[] = $theme;
+                }
 
-            for ($s = 0; $s < $submissionCount; $s++) {
-                $submission = FormSubmission::create([
-                    'uuid'         => Str::uuid(),
-                    'form_id'      => $form->id,
-                    'user_id'      => null,
-                    'ip_address'   => $this->randomIP(),
-                    'user_agent'   => $this->randomUserAgent(),
-                    'submitted_at' => $this->randomDate($s),
-                ]);
+                $this->command->info("  [{$user->name}] creating {$numForms} form(s)...");
 
-                foreach ($formFields as $field) {
-                    $value = $this->generateFieldValue($field, $s, $submissionCount);
-                    if ($value !== null) {
-                        SubmissionData::create([
-                            'submission_id' => $submission->id,
-                            'form_field_id' => $field->id,
-                            'value'         => $value,
-                        ]);
+                foreach ($assignedThemes as $theme) {
+                    $def = $this->formDefs[$theme];
+                    $fieldDefs = $this->fieldSets[$theme];
+
+                    $form = Form::create([
+                        'uuid'                 => (string) Str::uuid(),
+                        'user_id'              => $user->id,
+                        'title'                => $def['title'],
+                        'description'          => $def['description'],
+                        'slug'                 => 'dummy-' . $theme . '-' . Str::random(4),
+                        'status'               => 'published',
+                        'settings'             => [
+                            'collect_ip'    => true,
+                            'show_kbb_logo' => true,
+                        ],
+                        'confirmation_message' => 'Terima kasih, data Anda berhasil dikirim.',
+                        'confirmation_type'    => 'message',
+                        'limit_one_response'   => false,
+                    ]);
+
+                    $fieldRows = [];
+                    foreach ($fieldDefs as $j => $field) {
+                        $row = [];
+                        $row['form_id'] = $form->id;
+                        $row['section_id'] = null;
+                        $row['type'] = $field['type']->value;
+                        $row['label'] = $field['label'] ?? '';
+                        $row['placeholder'] = $field['placeholder'] ?? null;
+                        $row['help_text'] = $field['help_text'] ?? null;
+                        $row['required'] = $field['required'] ?? false;
+                        $row['options'] = isset($field['options']) ? json_encode($field['options']) : null;
+                        $row['order'] = $j + 1;
+                        $row['min_length'] = $field['min_length'] ?? null;
+                        $row['max_length'] = $field['max_length'] ?? null;
+                        $row['created_at'] = $now;
+                        $row['updated_at'] = $now;
+                        $fieldRows[] = $row;
                     }
+                    FormField::insert($fieldRows);
+
+                    $formFields = $form->fields()->whereNotIn('type', ['heading', 'paragraph', 'signature', 'file'])->get();
+                    $submissionCount = $def['count'];
+
+                    $submissionRows = [];
+                    for ($s = 0; $s < $submissionCount; $s++) {
+                        $submissionRows[] = [
+                            'uuid'         => (string) Str::uuid(),
+                            'form_id'      => $form->id,
+                            'user_id'      => null,
+                            'ip_address'   => $this->randomIP(),
+                            'user_agent'   => $this->randomUserAgent(),
+                            'submitted_at' => $this->randomDate($s),
+                            'created_at'   => $now,
+                            'updated_at'   => $now,
+                        ];
+                    }
+                    FormSubmission::insert($submissionRows);
+
+                    $insertedSubmissions = FormSubmission::where('form_id', $form->id)->orderBy('id')->get();
+
+                    foreach ($insertedSubmissions as $s => $submission) {
+                        foreach ($formFields as $field) {
+                            $value = $this->generateFieldValue($field, $s, $submissionCount);
+                            if ($value !== null && $value !== '') {
+                                $allSubmissionData[] = [
+                                    'submission_id' => $submission->id,
+                                    'form_field_id' => $field->id,
+                                    'value'         => $value,
+                                    'created_at'    => $now,
+                                    'updated_at'    => $now,
+                                ];
+                            }
+                        }
+                    }
+
+                    $totalForms++;
+                    $totalSubmissions += $submissionCount;
                 }
             }
-        }
+
+            if (!empty($allSubmissionData)) {
+                foreach (array_chunk($allSubmissionData, 500) as $chunk) {
+                    SubmissionData::insert($chunk);
+                }
+            }
+        });
+
+        $this->command->info('— — — — — — — — — — — — — — — — — — — —');
+        $this->command->info("  Done! Created {$totalForms} forms, {$totalSubmissions} submissions.");
+        $this->command->info('— — — — — — — — — — — — — — — — — — — —');
     }
 
     protected function randomIP(): string
@@ -293,11 +405,8 @@ class DummyFormSeeder extends Seeder
     {
         $type = $field->type->value;
 
-        if ($type === 'heading' || $type === 'paragraph') {
-            return '';
-        }
-        if ($type === 'file' || $type === 'signature') {
-            return mt_rand(0, 3) === 0 ? '' : null;
+        if ($type === 'heading' || $type === 'paragraph' || $type === 'signature' || $type === 'file') {
+            return null;
         }
 
         $label = $field->label;
@@ -346,12 +455,11 @@ class DummyFormSeeder extends Seeder
             return (string) $nik;
         }
         if (str_contains($label, 'Nama')) {
-            $gender = str_contains($label, 'Lengkap') ? null : null;
             $depan = $this->randomOf(array_merge(static::$namaDepanLaki, static::$namaDepanPerempuan));
             $belakang = $this->randomOf(static::$namaBelakang);
             return $depan . ' ' . $belakang;
         }
-        if (str_contains($label, 'WhatsApp') || str_contains($label, 'Telepon')) {
+        if (str_contains($label, 'WhatsApp') || str_contains($label, 'Telepon') || str_contains($label, 'Telpon')) {
             return '08' . mt_rand(100000000, 999999999);
         }
         if (str_contains($label, 'Pekerjaan')) {
@@ -359,6 +467,28 @@ class DummyFormSeeder extends Seeder
         }
         if (str_contains($label, 'Lokasi')) {
             return $this->randomOf(static::$kecamatan) . ' - ' . $this->randomOf(['Kantor Bupati', 'Gedung D', 'Lantai 2 Ruang ' . mt_rand(201, 215), 'Gudang Utama', 'Ruang Server']);
+        }
+        if (str_contains($label, 'Pemohon') || str_contains($label, 'Pelapor')) {
+            $depan = $this->randomOf(array_merge(static::$namaDepanLaki, static::$namaDepanPerempuan));
+            $belakang = $this->randomOf(static::$namaBelakang);
+            return $depan . ' ' . $belakang;
+        }
+        if (str_contains($label, 'Kegiatan') || str_contains($label, 'Barang')) {
+            return $this->randomOf(static::$namaBarang);
+        }
+        if (str_contains($label, 'Instansi') || str_contains($label, 'Perusahaan')) {
+            return $this->randomOf(['PT ' . $this->randomOf(static::$namaBelakang) . ' Sejahtera', 'CV ' . $this->randomOf(static::$namaBelakang) . ' Group', 'Pemerintah Kab. Bandung Barat', 'UPT ' . $this->randomOf(['Pendidikan', 'Kesehatan', 'Pertanian']) . ' ' . $this->randomOf(static::$kecamatan)]);
+        }
+        if (str_contains($label, 'Bidang') || str_contains($label, 'Unit')) {
+            return $this->randomOf(['Bidang Pelayanan', 'Bidang Umum', 'Bidang Keuangan', 'Bidang Infrastruktur', 'Bidang Sosial', 'Subbag Umum', 'Subbag Kepegawaian']);
+        }
+        if (str_contains($label, 'Kode')) {
+            return 'INV/' . date('Y') . '/' . str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+        }
+        if (str_contains($label, 'Tamu')) {
+            $depan = $this->randomOf(array_merge(static::$namaDepanLaki, static::$namaDepanPerempuan));
+            $belakang = $this->randomOf(static::$namaBelakang);
+            return $depan . ' ' . $belakang;
         }
         return 'Data ' . $label . ' #' . ($subIndex + 1);
     }
@@ -378,13 +508,25 @@ class DummyFormSeeder extends Seeder
         if (str_contains($label, 'Saran') || str_contains($label, 'Masukan')) {
             return static::$saranSurvey[$subIndex % count(static::$saranSurvey)];
         }
-        if (str_contains($label, 'Deskripsi')) {
-            $kondisi = $this->randomOf(['Baru', 'Bekas', 'Rekondisi', 'Second']);
-            return "Barang dalam kondisi {$kondisi}. " . $this->randomOf([
-                'Dilengkapi dengan kelengkapan standar pabrik.',
-                'Sudah termasuk biaya pengiriman dan instalasi.',
-                'Masih dalam masa garansi.',
-                'Telah dilakukan pengecekan dan berfungsi dengan baik.',
+        if (str_contains($label, 'Deskripsi') || str_contains($label, 'uraian')) {
+            return 'Kegiatan ' . $this->randomOf(['berjalan lancar', 'terlaksana dengan baik', 'sesuai rencana', 'diikuti oleh peserta yang antusias', 'memerlukan perbaikan']) . '. ' .
+                $this->randomOf(['Dihadiri oleh ' . mt_rand(10, 50) . ' orang peserta.', 'Bertempat di Aula Kecamatan.', 'Dilaksanakan sesuai jadwal yang ditentukan.']);
+        }
+        if (str_contains($label, 'Tindak Lanjut')) {
+            return $this->randomOf([
+                'Akan dilakukan monitoring lanjutan ' . mt_rand(1, 4) . ' minggu lagi.',
+                'Hasil kegiatan akan dilaporkan ke pimpinan.',
+                'Perlu koordinasi lanjut dengan dinas terkait.',
+                'Dokumentasi kegiatan akan dikirim ke bagian humas.',
+            ]);
+        }
+        if (str_contains($label, 'Keperluan') || str_contains($label, 'Maksud') || str_contains($label, 'Tujuan')) {
+            return $this->randomOf([
+                'Koordinasi program kerja ' . $this->randomOf(static::$kecamatan),
+                'Konsultasi mengenai pelayanan publik',
+                'Pengajuan surat keterangan domisili',
+                'Pembahasan anggaran kegiatan ' . $this->randomOf(['wisuda', 'pelatihan', 'sosialisasi']),
+                'Silaturahmi dan koordinasi lintas sektor',
             ]);
         }
         return 'Isian ' . $label . ' untuk entri ke-' . ($subIndex + 1);
@@ -392,22 +534,22 @@ class DummyFormSeeder extends Seeder
 
     protected function generateNumberValue(string $label, FormField $field): string
     {
-        if (str_contains($label, 'Anggota Keluarga')) {
+        if (str_contains($label, 'Anggota Keluarga') || str_contains($label, 'Tanggungan')) {
             return (string) mt_rand(1, 8);
         }
         if (str_contains($label, 'Nilai') && str_contains($label, '1-10')) {
-            $weights = [1, 2, 3, 10, 15, 14, 12, 8, 5, 2]; // skew toward middle
+            $weights = [1, 2, 3, 10, 15, 14, 12, 8, 5, 2];
             return (string) $this->weightedRandom([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], $weights);
         }
-        if (str_contains($label, 'Jumlah') || str_contains($label, 'Qty')) {
+        if (str_contains($label, 'Jumlah') || str_contains($label, 'Qty') || str_contains($label, 'Peserta')) {
             return (string) mt_rand(1, 25);
         }
-        if (str_contains($label, 'Nilai Perolehan') || str_contains($label, 'Rupiah')) {
-            $amounts = [1500000, 2500000, 3500000, 5000000, 7500000, 10000000, 15000000, 25000000, 50000000, 100000000, 250000000, 500000000];
+        if (str_contains($label, 'Nilai Perolehan') || str_contains($label, 'Rupiah') || str_contains($label, 'Penghasilan')) {
+            $amounts = [500000, 1000000, 1500000, 2500000, 3500000, 5000000];
             return (string) $this->randomOf($amounts);
         }
-        if (str_contains($label, 'WhatsApp') || str_contains($label, 'Telepon')) {
-            return '08' . mt_rand(100000000, 999999999);
+        if (str_contains($label, 'Estimasi')) {
+            return (string) mt_rand(10, 500);
         }
         return (string) mt_rand(1, 999);
     }
@@ -431,13 +573,21 @@ class DummyFormSeeder extends Seeder
             $daysAgo = mt_rand(1, 60);
             return now()->subDays($daysAgo)->format('Y-m-d');
         }
-        if (str_contains($label, 'Pengadaan')) {
+        if (str_contains($label, 'Pengadaan') || str_contains($label, 'Pinjam')) {
             $yearsAgo = mt_rand(0, 5);
             return now()->subYears($yearsAgo)->subDays(mt_rand(1, 365))->format('Y-m-d');
         }
-        if (str_contains($label, 'Survey')) {
-            $daysAgo = mt_rand(0, 7);
+        if (str_contains($label, 'Survey') || str_contains($label, 'Kunjungan') || str_contains($label, 'Pendataan')) {
+            $daysAgo = mt_rand(0, 30);
             return now()->subDays($daysAgo)->format('Y-m-d');
+        }
+        if (str_contains($label, 'Pelaksanaan') || str_contains($label, 'Mulai')) {
+            $daysAgo = mt_rand(1, 45);
+            return now()->subDays($daysAgo)->format('Y-m-d');
+        }
+        if (str_contains($label, 'Selesai') || str_contains($label, 'Kembali')) {
+            $daysAgo = mt_rand(0, 30);
+            return now()->addDays(mt_rand(1, 14))->format('Y-m-d');
         }
         $daysAgo = mt_rand(0, 30);
         return now()->subDays($daysAgo)->format('Y-m-d');

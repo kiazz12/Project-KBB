@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\SessionLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,7 +28,22 @@ class AuthController extends Controller
 
                 return back()->withErrors(['email' => 'Hanya Super Admin yang dapat mengakses panel ini.']);
             }
+
             $request->session()->regenerate();
+
+            if (!SessionLimitService::canLogin($user)) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->with('login_limit_error', 'Anda telah mencapai batas maksimal 1 session login. Silakan logout dari perangkat lain terlebih dahulu.');
+            }
+
+            $deletedSessions = SessionLimitService::limit($user);
+
+            if ($deletedSessions > 0) {
+                session()->flash('sessions_terminated', "{$deletedSessions} session lama telah diterminasi karena login dari perangkat baru.");
+            }
 
             return redirect()->intended(route('admin.dashboard'));
         }

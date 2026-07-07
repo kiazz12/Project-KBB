@@ -27,6 +27,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/{user}', [PageController::class, 'usersShow'])->name('users.show')->middleware('role:super_admin')->whereNumber('user');
     Route::get('/change-password', [PageController::class, 'changePassword'])->name('change-password');
     Route::post('/change-password', [WebAuthController::class, 'changePassword']);
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Route::get('/unread', [\App\Http\Controllers\NotificationController::class, 'unread'])->name('unread');
+        Route::post('/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('read');
+        Route::post('/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('markAllRead');
+    });
 });
 
 Route::get('/form/{slug}', [PageController::class, 'publicForm'])->name('public-form');

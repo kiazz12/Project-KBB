@@ -23,24 +23,27 @@
         }
     </script>
     <style>
-        .blob-1 { animation: float1 20s ease-in-out infinite; }
-        .blob-2 { animation: float2 25s ease-in-out infinite; }
-        .blob-3 { animation: float3 18s ease-in-out infinite; }
-        .blob-4 { animation: float1 22s ease-in-out infinite reverse; }
+        .bg-grid {
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+        .blob-1 { animation: float1 25s ease-in-out infinite; }
+        .blob-2 { animation: float2 30s ease-in-out infinite; }
+        .blob-3 { animation: float3 22s ease-in-out infinite; }
         @keyframes float1 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -40px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+            33% { transform: translate(40px, -50px) scale(1.15); opacity: 0.7; }
+            66% { transform: translate(-30px, 30px) scale(0.9); opacity: 0.4; }
         }
         @keyframes float2 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(-40px, -20px) scale(1.15); }
-            66% { transform: translate(30px, 30px) scale(0.85); }
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+            33% { transform: translate(-50px, -30px) scale(1.2); opacity: 0.6; }
+            66% { transform: translate(40px, 40px) scale(0.85); opacity: 0.3; }
         }
         @keyframes float3 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(20px, 40px) scale(0.9); }
-            66% { transform: translate(-30px, -10px) scale(1.1); }
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+            33% { transform: translate(30px, 50px) scale(1.1); opacity: 0.5; }
+            66% { transform: translate(-40px, -20px) scale(0.9); opacity: 0.2; }
         }
     </style>
     @livewireStyles
@@ -103,30 +106,35 @@
             </div>
             <div class="max-w-7xl mx-auto px-6 py-8">
                 @if (session('success'))
-                    <div class="mb-6 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm">{{ session('success') }}</div>
+                    <div class="mb-6 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ session('success') }}
+                    </div>
                 @endif
                 @if (session('error'))
-                    <div class="mb-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{{ session('error') }}</div>
+                    <div class="mb-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ session('error') }}
+                    </div>
                 @endif
                 @yield('content')
             </div>
         </main>
     </div>
     @else
-        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-kbb-600 via-kbb-700 to-kbb-900 overflow-hidden relative">
+        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-kbb-800 via-[#001a3a] to-kbb-950 overflow-hidden relative">
+            <div class="absolute inset-0 bg-grid"></div>
             <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                <div class="blob-1 absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-kbb-400/20 to-transparent blur-3xl"></div>
-                <div class="blob-2 absolute -bottom-40 -right-32 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-gold-400/15 to-transparent blur-3xl"></div>
-                <div class="blob-3 absolute top-1/3 -right-20 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-kbb-300/15 to-transparent blur-3xl"></div>
-                <div class="blob-4 absolute bottom-1/4 -left-20 w-[350px] h-[350px] rounded-full bg-gradient-to-br from-gold-300/10 to-transparent blur-3xl"></div>
+                <div class="blob-1 absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-kbb-500/20 via-transparent to-transparent blur-3xl"></div>
+                <div class="blob-2 absolute -bottom-48 -left-40 w-[700px] h-[700px] rounded-full bg-gradient-to-br from-gold-500/8 via-transparent to-transparent blur-3xl"></div>
             </div>
             @yield('content')
         </div>
     @endif
 
     @if (session('sessions_terminated'))
-        <div id="sessions-terminated-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center animate-bounce-in">
+        <div id="sessions-terminated-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center" style="animation: bIn 0.3s ease-out">
                 <div class="w-14 h-14 mx-auto mb-4 bg-amber-100 rounded-2xl flex items-center justify-center">
                     <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9.364-7.364A9 9 0 1112 3a9 9 0 017.364 4.636z"/></svg>
                 </div>
@@ -136,8 +144,7 @@
             </div>
         </div>
         <style>
-            @keyframes bounceIn { 0%{transform:scale(0.9);opacity:0} 50%{transform:scale(1.02)} 100%{transform:scale(1);opacity:1} }
-            .animate-bounce-in { animation: bounceIn 0.3s ease-out; }
+            @keyframes bIn { 0%{transform:scale(0.9) translateY(10px);opacity:0} 100%{transform:scale(1) translateY(0);opacity:1} }
         </style>
     @endif
 

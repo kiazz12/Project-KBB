@@ -97,16 +97,18 @@
             </div>
             <div class="max-w-7xl mx-auto px-6 py-8">
                 @if (session('success'))
-                    <div id="flash-success" class="mb-6 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm">
-                        {{ session('success') }}
-                        <button onclick="this.parentElement.remove()" class="float-right">&times;</button>
+                    <div id="flash-success" class="mb-6 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="flex-1">{{ session('success') }}</span>
+                        <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700">&times;</button>
                     </div>
                     <script>setTimeout(() => { const e = document.getElementById('flash-success'); if(e) e.remove(); }, 5000);</script>
                 @endif
                 @if (session('error'))
-                    <div id="flash-error" class="mb-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-                        {{ session('error') }}
-                        <button onclick="this.parentElement.remove()" class="float-right">&times;</button>
+                    <div id="flash-error" class="mb-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="flex-1">{{ session('error') }}</span>
+                        <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700">&times;</button>
                     </div>
                     <script>setTimeout(() => { const e = document.getElementById('flash-error'); if(e) e.remove(); }, 5000);</script>
                 @endif
@@ -116,19 +118,18 @@
     </div>
 
     @if (session('sessions_terminated'))
-        <div id="sessions-terminated-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center animate-bounce-in">
+        <div id="sessions-terminated-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center" style="animation: bIn 0.3s ease-out">
                 <div class="w-14 h-14 mx-auto mb-4 bg-amber-100 rounded-2xl flex items-center justify-center">
                     <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9.364-7.364A9 9 0 1112 3a9 9 0 017.364 4.636z"/></svg>
                 </div>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">Session Diterminasi</h3>
                 <p class="text-sm text-gray-600 mb-6">{{ session('sessions_terminated') }}</p>
-                <button onclick="this.closest('#sessions-terminated-modal').remove()" class="w-full bg-kbb-700 hover:bg-kbb-800 text-white font-medium py-2.5 rounded-lg transition">Mengerti</button>
+                <button onclick="this.closest('#sessions-terminated-modal').remove()" class="w-full bg-kbb-700 hover:bg-kbb-800 text-white font-medium py-2.5 rounded-xl transition">Mengerti</button>
             </div>
         </div>
         <style>
-            @keyframes bounceIn { 0%{transform:scale(0.9);opacity:0} 50%{transform:scale(1.02)} 100%{transform:scale(1);opacity:1} }
-            .animate-bounce-in { animation: bounceIn 0.3s ease-out; }
+            @keyframes bIn { 0%{transform:scale(0.9) translateY(10px);opacity:0} 100%{transform:scale(1) translateY(0);opacity:1} }
         </style>
     @endif
 

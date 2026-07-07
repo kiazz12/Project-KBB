@@ -20,6 +20,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/forms/{form}/analytics', [PageController::class, 'formsAnalytics'])->name('forms.analytics')->whereNumber('form');
     Route::get('/forms/{form}/submissions', [PageController::class, 'submissionsIndex'])->name('forms.submissions.index')->whereNumber('form');
     Route::get('/forms/{form}/submissions/{submission}', [PageController::class, 'submissionsShow'])->name('forms.submissions.show')->whereNumber('form', 'submission');
+    Route::post('/forms/{form}/submissions/{submission}/delete', [PageController::class, 'deleteSubmission'])->name('forms.submissions.delete')->whereNumber('form', 'submission');
+    Route::get('/forms/{form}/export/csv', [PageController::class, 'exportCsv'])->name('forms.export.csv')->whereNumber('form');
+    Route::get('/forms/{form}/export/pdf', [PageController::class, 'exportPdf'])->name('forms.export.pdf')->whereNumber('form');
     Route::get('/users', [PageController::class, 'usersIndex'])->name('users.index')->middleware('role:super_admin');
     Route::get('/users/{user}', [PageController::class, 'usersShow'])->name('users.show')->middleware('role:super_admin')->whereNumber('user');
     Route::get('/change-password', [PageController::class, 'changePassword'])->name('change-password');

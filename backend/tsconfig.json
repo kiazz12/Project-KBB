@@ -7,9 +7,10 @@
     "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
+    "allowJs": true,
     "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "types": ["vite/client"]
   },
-  "include": ["resources/js/**/*.ts", "resources/js/**/*.tsx"]
+  "include": ["**/*", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 }

@@ -8,9 +8,14 @@
     @if ($form && !$submitted)
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div class="bg-kbb-700 px-8 py-6">
-                <h1 class="text-2xl font-bold text-white">{{ $form->title }}</h1>
+                @if ($form->show_kbb_logo)
+                    <div class="flex justify-center mb-4">
+                        <img src="{{ asset('images/kbb-logo.png') }}" alt="KBB" class="w-12 h-12">
+                    </div>
+                @endif
+                <h1 class="text-2xl font-bold text-white text-center">{{ $form->title }}</h1>
                 @if ($form->description)
-                    <p class="text-kbb-200 text-sm mt-1">{{ $form->description }}</p>
+                    <p class="text-kbb-200 text-sm mt-1 text-center">{{ $form->description }}</p>
                 @endif
             </div>
             <div class="p-8 space-y-6">
@@ -80,6 +85,68 @@
                             @if ($field->type->value === 'time')
                                 <input type="time" wire:model="responses.{{ $field->id }}" @required($field->required)
                                     class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none transition">
+                            @endif
+
+                            @if ($field->type->value === 'file')
+                                <input type="file" wire:model="responses.{{ $field->id }}" @required($field->required) accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-kbb-50 file:text-kbb-700 hover:file:bg-kbb-100 transition">
+                                @error("responses.{$field->id}") <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @endif
+
+                            @if ($field->type->value === 'signature')
+                                <div class="border border-gray-300 rounded-lg overflow-hidden" x-data="{}">
+                                    <canvas id="sig-{{ $field->id }}" class="w-full h-32 cursor-crosshair"></canvas>
+                                </div>
+                                <input type="hidden" wire:model="responses.{{ $field->id }}" id="sig-input-{{ $field->id }}">
+                                <div class="flex gap-2 mt-1">
+                                    <button type="button" onclick="clearSig({{ $field->id }})" class="text-xs text-gray-500 hover:text-gray-700">Hapus</button>
+                                </div>
+                                <script>
+                                    (function() {
+                                        let canvas = document.getElementById('sig-{{ $field->id }}');
+                                        if (!canvas) return;
+                                        let ctx = canvas.getContext('2d');
+                                        let drawing = false;
+                                        canvas.width = canvas.offsetWidth;
+                                        canvas.height = canvas.offsetHeight;
+                                        ctx.strokeStyle = '#1f2937';
+                                        ctx.lineWidth = 2;
+                                        ctx.lineCap = 'round';
+                                        canvas.addEventListener('mousedown', () => drawing = true);
+                                        canvas.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); saveSig({{ $field->id }}); });
+                                        canvas.addEventListener('mouseleave', () => { if (drawing) { drawing = false; ctx.beginPath(); saveSig({{ $field->id }}); }});
+                                        canvas.addEventListener('mousemove', (e) => {
+                                            if (!drawing) return;
+                                            let rect = canvas.getBoundingClientRect();
+                                            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                                            ctx.stroke();
+                                            ctx.beginPath();
+                                            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+                                        });
+                                        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); drawing = true; });
+                                        canvas.addEventListener('touchend', (e) => { e.preventDefault(); drawing = false; ctx.beginPath(); saveSig({{ $field->id }}); });
+                                        canvas.addEventListener('touchmove', (e) => {
+                                            e.preventDefault();
+                                            if (!drawing) return;
+                                            let rect = canvas.getBoundingClientRect();
+                                            let touch = e.touches[0];
+                                            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                                            ctx.stroke();
+                                            ctx.beginPath();
+                                            ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                                        });
+                                    })();
+                                    function saveSig(id) {
+                                        let canvas = document.getElementById('sig-' + id);
+                                        document.getElementById('sig-input-' + id).value = canvas.toDataURL();
+                                    }
+                                    function clearSig(id) {
+                                        let canvas = document.getElementById('sig-' + id);
+                                        let ctx = canvas.getContext('2d');
+                                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                        document.getElementById('sig-input-' + id).value = '';
+                                    }
+                                </script>
                             @endif
 
                             @if ($field->type->value === 'heading')

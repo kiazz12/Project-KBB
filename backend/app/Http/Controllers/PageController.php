@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Form;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PageController extends Controller
 {
@@ -128,9 +130,36 @@ class PageController extends Controller
         $form = Form::findOrFail($id);
         $this->authorize('view', $form);
 
-        $submissions = $form->submissions()->with('data.formField')->latest('submitted_at')->paginate(20);
+        $query = $form->submissions()->with('data.formField');
+
+        if ($search = request('search')) {
+            $submissionIds = \App\Models\SubmissionData::where('value', 'like', "%{$search}%")
+                ->whereIn('submission_id', $form->submissions()->pluck('id'))
+                ->pluck('submission_id')
+                ->unique();
+            $query->whereIn('id', $submissionIds);
+        }
+
+        $submissions = $query->latest('submitted_at')->paginate(20);
 
         return view('forms.submissions.index', compact('form', 'submissions'));
+    }
+
+    public function deleteSubmission(Request $request, int $formId, int $id)
+    {
+        $form = Form::findOrFail($formId);
+        $this->authorize('view', $form);
+
+        $submission = \App\Models\FormSubmission::findOrFail($id);
+        $submission->data()->delete();
+        $submission->delete();
+
+        \App\Services\AuditService::log('submission_deleted', [
+            'form_id' => $form->id,
+            'submission_id' => $submission->id,
+        ]);
+
+        return redirect()->route('forms.submissions.index', $form)->with('success', 'Submission berhasil dihapus.');
     }
 
     public function submissionsShow(int $formId, int $id)
@@ -161,6 +190,54 @@ class PageController extends Controller
     public function changePassword()
     {
         return view('change-password');
+    }
+
+    public function exportCsv(Request $request, int $id): StreamedResponse
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('view', $form);
+
+        $fields = $form->fields()->orderBy('order')->get();
+        $headers = array_merge(['Submission UUID', 'Submitted At'], $fields->pluck('label')->toArray());
+
+        $callback = function () use ($form, $fields, $headers) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $headers);
+
+            $form->submissions()->chunk(100, function ($submissions) use ($handle, $fields) {
+                foreach ($submissions as $submission) {
+                    $row = [$submission->uuid, $submission->submitted_at];
+                    $data = $submission->data->keyBy('form_field_id');
+                    foreach ($fields as $field) {
+                        $row[] = $data->get($field->id)?->value ?? '';
+                    }
+                    fputcsv($handle, $row);
+                }
+            });
+
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, "{$form->slug}-submissions.csv", [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    public function exportPdf(Request $request, int $id): mixed
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('view', $form);
+
+        $fields = $form->fields()->orderBy('order')->get();
+        $submissions = $form->submissions()->with('data')->latest()->get();
+
+        $pdf = Pdf::loadView('exports.submissions-pdf', [
+            'form' => $form,
+            'fields' => $fields,
+            'submissions' => $submissions,
+        ]);
+
+        return $pdf->download("{$form->slug}-submissions.pdf");
     }
 
     public function publicForm(string $slug)

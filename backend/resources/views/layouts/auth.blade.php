@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Login') — KBB Forms</title>
+    <title>@yield('title', 'Login') — Formulir Online KBB</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/kbb-logo.png') }}" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />

@@ -32,7 +32,7 @@ class AuthService
      */
     public function logout(User $user): bool
     {
-        $user->currentAccessToken()->delete();
+        $user->currentAccessToken()?->delete();
         return true;
     }
 

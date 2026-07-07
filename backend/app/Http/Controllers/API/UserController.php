@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Form;
 use App\Models\User;
@@ -34,7 +35,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => ['required', Rule::in(['super_admin', 'admin'])],
+            'role' => ['required', Rule::in([UserRole::SuperAdmin->value, UserRole::Admin->value])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
         ]);
@@ -63,17 +64,15 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'sometimes|string|min:8',
-            'role' => ['sometimes', Rule::in(['super_admin', 'admin'])],
+            'role' => ['sometimes', Rule::in([UserRole::SuperAdmin->value, UserRole::Admin->value])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
         ]);
 
-        $data = $request->all();
+        $data = $request->only(['name', 'email', 'role', 'nip', 'opd', 'opd_id']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
-        } else {
-            unset($data['password']);
         }
 
         $old = $user->toArray();

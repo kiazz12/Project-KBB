@@ -59,9 +59,7 @@ class ReportingService
             'form_id' => $form->id,
             'form_title' => $form->title,
             'status' => $form->status,
-            'total_submissions' => $submissions->count(),
-            'published_at' => $form->published_at,
-            'closed_at' => $form->closed_at,
+            'total_submissions' => $form->submissions()->count(),
             'submission_rate' => $this->calculateSubmissionRate($form),
         ];
     }

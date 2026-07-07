@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class WebAuthController extends Controller
 {
@@ -38,6 +39,24 @@ class WebAuthController extends Controller
             ],
             'message' => 'Login berhasil.',
         ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Password saat ini tidak sesuai.']);
+        }
+
+        $user->update(['password' => Hash::make($request->new_password)]);
+
+        return back()->with('success', 'Password berhasil diubah.');
     }
 
     public function logout(Request $request)

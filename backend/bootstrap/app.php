@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\ForceJsonResponse;
-use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -25,10 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             '/login',
-        ]);
-
-        $middleware->web(append: [
-            HandleInertiaRequests::class,
         ]);
 
         $middleware->alias([

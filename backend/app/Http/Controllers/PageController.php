@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Form;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class PageController extends Controller
 {
@@ -15,52 +14,113 @@ class PageController extends Controller
             return redirect('/dashboard');
         }
 
-        return Inertia::render('Login');
+        return view('auth.login');
     }
 
     public function dashboard()
     {
-        return Inertia::render('Dashboard');
+        $isSuper = auth()->user()->isSuperAdmin();
+        $userId = auth()->id();
+
+        $totalForms = $isSuper ? Form::count() : Form::where('user_id', $userId)->count();
+        $publishedForms = $isSuper ? Form::where('status', 'published')->count() : Form::where('user_id', $userId)->where('status', 'published')->count();
+        $totalSubmissions = $isSuper
+            ? \App\Models\FormSubmission::count()
+            : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->count();
+        $submissionsToday = $isSuper
+            ? \App\Models\FormSubmission::whereDate('submitted_at', today())->count()
+            : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereDate('submitted_at', today())->count();
+
+        $recentForms = Form::withCount(['fields', 'submissions'])
+            ->when(!$isSuper, fn($q) => $q->where('user_id', $userId))
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('dashboard.index', compact('totalForms', 'publishedForms', 'totalSubmissions', 'submissionsToday', 'recentForms'));
     }
 
-    public function formsIndex()
+    public function formsIndex(Request $request)
     {
-        return Inertia::render('forms/Index');
+        $isSuper = auth()->user()->isSuperAdmin();
+        $query = Form::with('user:id,name')->withCount(['fields', 'submissions']);
+
+        if (!$isSuper) {
+            $query->where('user_id', auth()->id());
+        }
+
+        if ($search = $request->search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->status) {
+            $query->where('status', $status);
+        }
+
+        $forms = $query->latest()->paginate(15)->withQueryString();
+
+        return view('forms.index', compact('forms'));
     }
 
     public function formsCreate()
     {
-        return Inertia::render('forms/Create');
+        return view('forms.create');
     }
 
     public function formsShow(int $id)
     {
-        $form = Form::with(['fields' => fn ($q) => $q->orderBy('order')])->findOrFail($id);
+        $form = Form::with(['fields' => fn($q) => $q->orderBy('order')])
+            ->withCount(['fields', 'submissions'])
+            ->findOrFail($id);
         $this->authorize('view', $form);
 
-        return Inertia::render('forms/Show', [
-            'form' => $form->loadCount(['fields', 'submissions']),
-        ]);
+        return view('forms.show', compact('form'));
     }
 
     public function formsEdit(int $id)
     {
-        $form = Form::with(['fields' => fn ($q) => $q->orderBy('order')])->findOrFail($id);
+        $form = Form::with(['fields' => fn($q) => $q->orderBy('order')])->findOrFail($id);
         $this->authorize('update', $form);
 
-        return Inertia::render('forms/Edit', [
-            'form' => $form,
-        ]);
+        return view('forms.edit', compact('form'));
     }
 
     public function formsAnalytics(int $id)
     {
-        $form = Form::findOrFail($id);
+        $form = Form::with('fields')->findOrFail($id);
         $this->authorize('view', $form);
 
-        return Inertia::render('forms/Analytics', [
-            'id' => $id,
-        ]);
+        $totalSubmissions = $form->submissions()->count();
+        $submissionsByDate = $form->submissions()
+            ->selectRaw('DATE(submitted_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        $fieldAnalytics = [];
+        foreach ($form->fields as $field) {
+            $values = $form->submissions()
+                ->join('submission_data', 'form_submissions.id', '=', 'submission_data.submission_id')
+                ->where('submission_data.form_field_id', $field->id)
+                ->selectRaw('submission_data.value, COUNT(*) as count')
+                ->groupBy('submission_data.value')
+                ->orderByDesc('count')
+                ->get();
+            $counts = [];
+            foreach ($values as $v) {
+                $counts[$v->value] = $v->count;
+            }
+            $fieldAnalytics[] = [
+                'field_id' => $field->id,
+                'field_label' => $field->label,
+                'field_type' => $field->type->value,
+                'counts' => $counts,
+            ];
+        }
+
+        return view('forms.analytics', compact('form', 'totalSubmissions', 'submissionsByDate', 'fieldAnalytics'));
     }
 
     public function submissionsIndex(int $id)
@@ -68,9 +128,9 @@ class PageController extends Controller
         $form = Form::findOrFail($id);
         $this->authorize('view', $form);
 
-        return Inertia::render('forms/submissions/Index', [
-            'formId' => $id,
-        ]);
+        $submissions = $form->submissions()->with('data.formField')->latest('submitted_at')->paginate(20);
+
+        return view('forms.submissions.index', compact('form', 'submissions'));
     }
 
     public function submissionsShow(int $formId, int $id)
@@ -78,47 +138,33 @@ class PageController extends Controller
         $form = Form::findOrFail($formId);
         $this->authorize('view', $form);
 
-        return Inertia::render('forms/submissions/Show', [
-            'formId' => $formId,
-            'submissionId' => $id,
-        ]);
+        $submission = \App\Models\FormSubmission::with('data.formField')->findOrFail($id);
+
+        return view('forms.submissions.show', compact('form', 'submission'));
     }
 
     public function usersIndex()
     {
-        $users = User::latest()->get();
+        $users = User::latest()->paginate(20);
 
-        return Inertia::render('UsersIndex', [
-            'users' => $users,
-        ]);
+        return view('users.index', compact('users'));
     }
 
     public function usersShow(int $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::withCount('forms')->findOrFail($id);
+        $forms = $user->forms()->withCount(['fields', 'submissions'])->latest()->paginate(15);
 
-        return Inertia::render('UserDetail', [
-            'user' => $user,
-        ]);
+        return view('users.show', compact('user', 'forms'));
     }
 
     public function changePassword()
     {
-        return Inertia::render('ChangePassword');
+        return view('change-password');
     }
 
     public function publicForm(string $slug)
     {
-        return Inertia::render('PublicForm', [
-            'slug' => $slug,
-        ]);
-    }
-
-    public function logout(Request $request)
-    {
-        auth()->user()->currentAccessToken()->delete();
-        auth()->guard('web')->logout();
-
-        return redirect('/login');
+        return view('public-form', compact('slug'));
     }
 }

@@ -54,14 +54,14 @@ class User extends Authenticatable
      */
     public function isSuperAdmin(): bool
     {
-        return $this->role === UserRole::SUPER_ADMIN->value || $this->role === 'super_admin';
+        return $this->role === UserRole::SuperAdmin;
     }
 
     /**
-     * Check if user is operator
+     * Check if user is admin (non-super)
      */
-    public function isOperator(): bool
+    public function isAdmin(): bool
     {
-        return $this->role === 'operator' || !$this->isSuperAdmin();
+        return $this->role === UserRole::Admin;
     }
 }

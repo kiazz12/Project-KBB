@@ -105,7 +105,7 @@ class FieldController extends Controller
 
         $request->validate([
             'field_ids' => 'required|array',
-            'field_ids.*' => 'integer|exists:form_fields,id',
+            'field_ids.*' => "integer|exists:form_fields,id,form_id,{$form->id}",
         ]);
 
         foreach ($request->field_ids as $index => $fieldId) {

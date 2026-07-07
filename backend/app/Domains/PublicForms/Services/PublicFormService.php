@@ -28,8 +28,8 @@ class PublicFormService
         return DB::transaction(function () use ($form, $data) {
             // Create submission
             $submission = FormSubmission::create([
+                'uuid' => (string) \Illuminate\Support\Str::uuid(),
                 'form_id' => $form->id,
-                'status' => 'submitted',
                 'submitted_at' => now(),
             ]);
 

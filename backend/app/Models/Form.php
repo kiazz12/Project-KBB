@@ -15,10 +15,12 @@ class Form extends Model
     protected $fillable = [
         'uuid',
         'user_id',
+        'opd_id',
         'title',
         'description',
         'slug',
         'status',
+        'data_classification',
         'settings',
         'starts_at',
         'ends_at',
@@ -29,12 +31,8 @@ class Form extends Model
         'confirmation_message',
         'limit_one_response',
         'confirmation_type',
-        'allow_anonymous',
-        'notification_email',
-        'allowed_domains',
-        'custom_css',
-        'submit_button_text',
-        'welcome_message',
+        'header_image',
+        'theme_color',
         'redirect_url',
     ];
 

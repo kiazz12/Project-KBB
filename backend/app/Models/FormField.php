@@ -21,6 +21,8 @@ class FormField extends Model
         'min_length',
         'max_length',
         'default_value',
+        'conditions',
+        'allow_other',
     ];
 
     protected function casts(): array

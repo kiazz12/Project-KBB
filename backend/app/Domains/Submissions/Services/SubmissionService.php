@@ -57,7 +57,7 @@ class SubmissionService
      */
     public function getFormStatistics(Form $form): array
     {
-        $submissions = $submission->where('form_id', $form->id);
+        $submissions = FormSubmission::where('form_id', $form->id);
         
         return [
             'total_submissions' => $submissions->count(),

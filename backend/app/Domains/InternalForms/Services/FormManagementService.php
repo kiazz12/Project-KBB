@@ -47,7 +47,7 @@ class FormManagementService
             throw new \Exception('Cannot publish form without fields');
         }
 
-        $form->update(['status' => 'published', 'published_at' => now()]);
+        $form->update(['status' => 'published']);
         return $form;
     }
 
@@ -56,7 +56,7 @@ class FormManagementService
      */
     public function closeForm(Form $form): Form
     {
-        $form->update(['status' => 'closed', 'closed_at' => now()]);
+        $form->update(['status' => 'closed']);
         return $form;
     }
 

@@ -151,10 +151,10 @@ Implementasi awal Project-KBB sebagai modular monolith untuk aplikasi SPBE pemer
 
 ```
 Project-KBB (Single Application)
-├── Frontend (Blade + Alpine.js + Tailwind CDN)
-│   ├── Layouts (app.blade.php, auth.blade.php)
+├── Frontend (Blade + Livewire + Tailwind CDN)
+│   ├── Layouts (app.blade.php, auth.blade.php with @livewireStyles)
 │   ├── Blade Pages (10 templates)
-│   └── Alpine.js (field builder, validation, interactivity)
+│   └── Livewire Components (FormEditor, CreateForm, PublicForm)
 ├── Auth Domain
 │   ├── Login/Logout
 │   ├── Session Management
@@ -183,13 +183,15 @@ Project-KBB (Single Application)
 
 ### Key Components
 
-**Frontend (Blade + Alpine.js):**
+**Frontend (Blade + Livewire):**
 - Server-side rendering via Blade templates
-- Client-side interactivity via Alpine.js (CDN)
+- Server-driven interactivity via Livewire v4 (auto-discovered from `app/Livewire/`)
 - Tailwind CSS v3 via CDN (utility-first styling)
-- No build step for JavaScript — minimal asset pipeline
+- Vanilla JS only for trivial UI (sidebar toggle, password toggle)
+- No build step for JavaScript — no npm, no Vite frontend build
 - Responsive sidebar navigation layout
 - Brand colors: KBB Blue (#003778), Gold (#C8A45C)
+- 3 Livewire components: FormEditor, CreateForm, PublicForm
 
 **Services Layer:**
 - Centralized business logic
@@ -263,7 +265,7 @@ Project-KBB (Single Application)
 
 ## Files Modified/Created
 
-### New Files Created: 18
+### New Files Created: 24
 
 **Models:**
 - `app/Models/OPD.php` - OPD entity
@@ -292,9 +294,27 @@ Project-KBB (Single Application)
 - `docs/FASE-4-DATA-CLASSIFICATION.md` - Phase 4 documentation
 - `docs/FASE-5-9-IMPLEMENTATION-GUIDE.md` - Phase 5-9 guidelines
 
-### Files Modified: 1
+**Livewire Components:**
+- `app/Livewire/FormEditor.php` - Field builder with CRUD, reorder, publish/close, settings
+- `app/Livewire/CreateForm.php` - Create new form
+- `app/Livewire/PublicForm.php` - Public form submission
+
+**Livewire Views:**
+- `resources/views/livewire/form-editor.blade.php`
+- `resources/views/livewire/create-form.blade.php`
+- `resources/views/livewire/public-form.blade.php`
+
+**Seeders:**
+- `database/seeders/DummyFormSeeder.php` - 5 dummy forms with all field types
+
+### Files Modified: 6
 
 - `app/Models/User.php` - Added OPD relationship dan helper methods
+- `app/Http/Controllers/PageController.php` - Updated for public-form slug parameter
+- `resources/views/layouts/app.blade.php` - Removed Alpine.js, added Livewire scripts, vanilla JS sidebar
+- `resources/views/layouts/auth.blade.php` - Removed Alpine.js, added Livewire scripts
+- `resources/views/auth/login.blade.php` - Replaced Alpine.js password toggle with vanilla JS
+- `resources/views/change-password.blade.php` - Replaced Alpine.js loading state with vanilla JS
 
 ---
 
@@ -492,6 +512,18 @@ Project-KBB (Single Application)
   - Removed HandleInertiaRequests middleware
   - Updated AGENTS.md, ARCHITECTURE.md, IMPLEMENTATION_SUMMARY.md
 
+### v1.2.0 - 2026-07-07
+- **Released:** Migrated from Alpine.js to Livewire v4
+- **Status:** ✅ STABLE
+- **Key Changes:**
+  - Installed Livewire v4 via Composer
+  - Created 3 Livewire components: FormEditor, CreateForm, PublicForm
+  - Removed Alpine.js CDN from all layouts
+  - Replaced all Alpine.js directives with vanilla JS or Livewire
+  - Updated AGENTS.md for Livewire architecture
+  - Created DummyFormSeeder with 5 forms (all field types, different accounts)
+  - Updated ARCHITECTURE.md and IMPLEMENTATION_SUMMARY.md
+
 ### v1.0.0 - 2026-06-26
 - **Released:** Initial implementation of Phase 1-4
 - **Status:** ✅ STABLE
@@ -597,5 +629,5 @@ For questions atau issues:
 **Document Version:** 1.1.0  
 **Created:** 2026-06-26  
 **Updated:** 2026-07-07  
-**Status:** Active Development (Blade + Alpine.js)  
+**Status:** Active Development (Blade + Livewire)  
 **Next Milestone:** Phase 5 Implementation

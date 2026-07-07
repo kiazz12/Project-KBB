@@ -4,7 +4,7 @@
 
 Project-KBB adalah aplikasi SPBE pemerintah daerah untuk **Pemerintah Kabupaten Bandung Barat** yang dibangun dengan arsitektur **Modular Monolith**. Ini berarti:
 
-- **Satu aplikasi utama** - Single Laravel application (Blade + Alpine.js)
+- **Satu aplikasi utama** - Single Laravel application (Blade + Livewire)
 - **Modular structure** - Code organized by business domain, not by layer
 - **Clear boundaries** - Each module has defined responsibilities
 - **Easy to test** - Domain logic can be tested independently
@@ -250,10 +250,9 @@ Public User
     │
     ├─→ GET /form/{slug}
     │   └─→ PageController@publicForm()
-    │       └─→ Blade view: public-form.blade.php (Alpine.js SPA-like)
-    │           └─→ fetch GET /api/v1/forms/public/{slug}
+    │           └─→ <livewire:public-form /> renders form fields
     │               └─→ Form marked as 'published'
-    │                   └─→ Render form fields via Alpine.js
+    │                   └─→ Validation & submission handled by Livewire
     │
     └─→ POST /api/v1/forms/public/{slug}
         ├─→ Throttling check (10 req/min per IP)
@@ -277,18 +276,11 @@ Admin (authenticated via session)
     │
     ├─→ GET  /forms/create
     │   └─→ Blade view: forms/create.blade.php
-    │       └─→ POST /api/v1/forms via fetch (X-CSRF-TOKEN + session auth)
+    │       └─→ <livewire:create-form /> handles title/description/slug
     │
     ├─→ GET  /forms/{form}/edit
-    │   └─→ Blade view: forms/edit.blade.php (Alpine.js field builder)
-    │       ├─→ fetch API calls (CRUD fields, publish, close, save settings)
-    │       ├─→ POST /api/v1/forms/{form}/fields        (add field)
-    │       ├─→ PUT  /api/v1/forms/{form}/fields/{field} (edit field)
-    │       ├─→ DELETE /api/v1/forms/{form}/fields/{field}
-    │       ├─→ POST /api/v1/forms/{form}/fields/reorder
-    │       ├─→ POST /api/v1/forms/{form}/publish
-    │       ├─→ POST /api/v1/forms/{form}/close
-    │       └─→ PUT  /api/v1/forms/{form}               (update settings)
+    │   └─→ Blade view: forms/edit.blade.php
+    │       └─→ <livewire:form-editor /> handles all field CRUD, publish, close, settings
     │
     ├─→ GET  /forms/{form}
     │   └─→ Blade view: forms/show.blade.js
@@ -454,54 +446,58 @@ audit_logs
 
 ## Frontend Architecture
 
-### Blade + Alpine.js + Tailwind CSS
+### Blade + Livewire + Tailwind CSS
 
-Frontend menggunakan **server-side rendering** dengan Blade templates dan Alpine.js untuk interaktivitas:
+Frontend menggunakan **server-side rendering** dengan Blade templates dan Livewire untuk interaktivitas:
 
 **Stack:**
 - **Blade** - Server-side templating engine Laravel
-- **Alpine.js v3** (CDN) - Interaktivitas client-side (field builder, form submission, live search)
+- **Livewire v4** - Server-driven interactivity (field builder, form submission, create form)
 - **Tailwind CSS v3** (CDN) - Utility-first styling
+- **Vanilla JS** - Only for trivial UI (sidebar toggle, password toggle, flash message dismiss)
 - **DOMPDF** - PDF export generation
 
 **Layout Structure:**
 ```
 resources/views/
 ├── layouts/
-│   ├── app.blade.php       # Main layout (sidebar nav, flash messages)
-│   └── auth.blade.php      # Auth layout (login page)
+│   ├── app.blade.php       # Main layout (sidebar nav, flash messages, @livewireStyles/Scripts)
+│   └── auth.blade.php      # Auth layout (login page, @livewireStyles/Scripts)
 ├── auth/
 │   └── login.blade.php     # Login form
 ├── dashboard/
 │   └── index.blade.php     # Dashboard with stats
 ├── forms/
 │   ├── index.blade.php     # Form list
-│   ├── create.blade.php    # Create form
-│   ├── edit.blade.php      # Form editor (field builder)
+│   ├── create.blade.php    # Create form (embeds <livewire:create-form />)
+│   ├── edit.blade.php      # Form editor (embeds <livewire:form-editor />)
 │   ├── show.blade.php      # Form detail
 │   └── submissions/
 │       ├── index.blade.php # Submission list
 │       └── show.blade.php  # Submission detail
+├── livewire/
+│   ├── form-editor.blade.php   # Field builder with Livewire
+│   ├── create-form.blade.php   # Create form with Livewire
+│   └── public-form.blade.php   # Public form with Livewire
 ├── users/
 │   ├── index.blade.php     # User management
 │   └── show.blade.php      # User detail
 ├── change-password.blade.php
-├── public-form.blade.php   # Public form submission
+├── public-form.blade.php   # Public form wrapper (embeds <livewire:public-form />)
 ```
 
-**Interactivity (Alpine.js):**
-- Form field builder: drag-free reorder, add/edit/delete fields
-- Real-time form validation
-- Flash message auto-dismiss
-- Form submission tracking
+**Livewire Components (`app/Livewire/`):**
+- `FormEditor` - Full field builder: CRUD fields, reorder, publish/close form, settings tab
+- `CreateForm` - Create new form with title, description, auto-slug
+- `PublicForm` - Render all field types, per-field validation, submission, success state
+
+**Note:** Tailwind v3 via CDN, Livewire via CDN-less internal route — no build step for JavaScript.
 
 **Brand Colors:**
 ```css
 --kbb-700: #003778  /* Primary blue */
 --gold-400: #C8A45C /* Accent gold */
 ```
-
-**Note:** Tailwind v3 dan Alpine.js dimuat via CDN — tidak ada build step untuk JavaScript.
 
 ---
 
@@ -693,7 +689,7 @@ tests/
 ### Single Application Deployment
 
 ```
-├── Web Server (Laravel + Blade + Alpine.js)
+├── Web Server (Laravel + Blade + Livewire)
 │   ├── Public routes (forms, submissions)
 │   └── Internal routes (admin dashboard)
 │
@@ -817,4 +813,4 @@ tests/
 
 **Architecture Version:** 1.1.0  
 **Last Updated:** 2026-07-07  
-**Status:** Active Development (Blade + Alpine.js)
+**Status:** Active Development (Blade + Livewire)

@@ -64,6 +64,7 @@ class FormEditor extends Component
 
     public function mount(Form $form): void
     {
+        $this->authorize('update', $form);
         $this->form = $form->load(['fields.section', 'sections']);
         $this->settingsTitle = $form->title;
         $this->settingsDescription = $form->description ?? '';
@@ -115,6 +116,7 @@ class FormEditor extends Component
 
     public function saveField(): void
     {
+        $this->authorize('update', $this->form);
         $this->validateOnly('fieldType');
         $this->validateOnly('fieldLabel');
 
@@ -158,6 +160,7 @@ class FormEditor extends Component
 
     public function deleteField(int $fieldId): void
     {
+        $this->authorize('update', $this->form);
         $field = $this->form->fields()->findOrFail($fieldId);
         $label = $field->label;
         $field->delete();
@@ -217,6 +220,7 @@ class FormEditor extends Component
 
     public function publishForm(): void
     {
+        $this->authorize('update', $this->form);
         $this->form->update(['status' => 'published']);
         AuditService::log('form_published', $this->form, "Form '{$this->form->title}' published");
         $this->publishedUrl = url('/form/' . $this->form->slug);
@@ -230,6 +234,7 @@ class FormEditor extends Component
 
     public function closeForm(): void
     {
+        $this->authorize('update', $this->form);
         $this->form->update(['status' => 'closed']);
         AuditService::log('form_closed', $this->form, "Form '{$this->form->title}' closed");
         $this->message = 'Form berhasil ditutup.';
@@ -238,6 +243,7 @@ class FormEditor extends Component
 
     public function saveSettings(): void
     {
+        $this->authorize('update', $this->form);
         $this->validate();
 
         $this->form->update([
@@ -287,6 +293,7 @@ class FormEditor extends Component
 
     public function saveSection(): void
     {
+        $this->authorize('update', $this->form);
         $this->validate([
             'sectionTitle' => 'required|string|max:255',
             'sectionDescription' => 'nullable|string|max:500',
@@ -318,6 +325,7 @@ class FormEditor extends Component
 
     public function deleteSection(int $sectionId): void
     {
+        $this->authorize('update', $this->form);
         $section = $this->form->sections()->findOrFail($sectionId);
         $title = $section->title;
 

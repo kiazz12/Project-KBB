@@ -241,10 +241,14 @@ class PageController extends Controller
         return view('change-password');
     }
 
-    public function exportCsv(Request $request, int $id): StreamedResponse
+    public function exportCsv(Request $request, int $id): mixed
     {
         $form = Form::findOrFail($id);
         $this->authorize('view', $form);
+
+        if ($form->data_classification && !$form->data_classification->canExport()) {
+            return redirect()->back()->with('error', 'Form dengan klasifikasi ini tidak dapat diexport.');
+        }
 
         $fields = $form->fields()->orderBy('order')->get();
         $headers = array_merge(['Submission UUID', 'Submitted At'], $fields->pluck('label')->toArray());
@@ -276,6 +280,10 @@ class PageController extends Controller
     {
         $form = Form::findOrFail($id);
         $this->authorize('view', $form);
+
+        if ($form->data_classification && !$form->data_classification->canExport()) {
+            return redirect()->back()->with('error', 'Form dengan klasifikasi ini tidak dapat diexport.');
+        }
 
         $fields = $form->fields()->orderBy('order')->get();
         $submissions = $form->submissions()->with('data')->latest()->get();

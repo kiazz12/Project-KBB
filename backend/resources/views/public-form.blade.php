@@ -25,7 +25,7 @@
     @livewireStyles
 </head>
 <body class="min-h-screen bg-gradient-to-br from-kbb-50 via-white to-gold-50 flex items-start justify-center py-12 px-4">
-    @livewire('public-form', ['slug' => $slug], key($slug))
+    @livewire('public-form', ['slug' => $slug], $slug)
     @livewireScripts
 </body>
 </html>

@@ -47,6 +47,7 @@ class UserController extends Controller
             'role' => $request->role,
             'nip' => $request->nip,
             'opd' => $request->opd,
+            'opd_id' => $request->opd_id,
         ]);
 
         AuditService::log('user.created', $user, "User '{$user->name}' created");

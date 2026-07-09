@@ -260,7 +260,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2.5 flex-shrink-0 ml-2">
-                    <span class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $form->status === 'published' ? 'bg-emerald-50 text-emerald-700' : ($form->status === 'closed' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-500') }}">
+                    <span class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $form->status->value === 'published' ? 'bg-emerald-50 text-emerald-700' : ($form->status->value === 'closed' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-500') }}">
                         {{ $form->status }}
                     </span>
                     <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -350,7 +350,7 @@
                         </p>
                     </div>
                 </div>
-                <span class="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0 {{ $form->status === 'published' ? 'bg-emerald-50 text-emerald-700' : ($form->status === 'closed' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-500') }}">
+                <span class="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0 {{ $form->status->value === 'published' ? 'bg-emerald-50 text-emerald-700' : ($form->status->value === 'closed' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-500') }}">
                     {{ $form->status }}
                 </span>
             </a>

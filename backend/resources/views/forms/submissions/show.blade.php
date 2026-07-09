@@ -18,7 +18,7 @@
                 @foreach($submission->data as $data)
                     <div>
                         <p class="text-sm font-medium text-gray-700">{{ $data->formField?->label ?? 'Field #' . $data->form_field_id }}</p>
-                        <p class="text-sm text-gray-900 mt-1 bg-gray-50 rounded-lg p-3">{{ $data->value ?: '(empty)' }}</p>
+                        <p class="text-sm text-gray-900 mt-1 bg-gray-50 rounded-lg p-3">{{ strip_tags($data->value) ?: '(empty)' }}</p>
                     </div>
                 @endforeach
             </div>

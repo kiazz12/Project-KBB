@@ -10,13 +10,13 @@
     <div class="flex-1">
         <h1 class="text-2xl font-bold text-gray-900">{{ $form->title }}</h1>
         <p class="text-sm text-gray-500 mt-1">
-            <span class="{{ $form->status === 'published' ? 'text-emerald-600' : ($form->status === 'closed' ? 'text-red-500' : 'text-gray-400') }}">{{ $form->status }}</span>
+            <span class="{{ $form->status->value === 'published' ? 'text-emerald-600' : ($form->status->value === 'closed' ? 'text-red-500' : 'text-gray-400') }}">{{ $form->status }}</span>
             · {{ $form->fields_count }} fields · {{ $form->submissions_count }} responses
             @if($form->sections_count > 0) · {{ $form->sections_count }} sections @endif
         </p>
     </div>
     <div class="flex items-center gap-2">
-        @if($form->status === 'published')
+        @if($form->status->value === 'published')
             <a href="{{ url('/form/' . $form->slug) }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg transition">Public Link</a>
         @endif
         @if($form->trashed())

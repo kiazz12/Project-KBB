@@ -134,5 +134,6 @@
     @endif
 
     @livewireScripts
+    @stack('scripts')
 </body>
 </html>

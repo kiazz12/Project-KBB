@@ -99,8 +99,8 @@
                                 </p>
                             </div>
                         </div>
-                        <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0 {{ $form->status === 'published' ? 'bg-emerald-50 text-emerald-700' : ($form->status === 'closed' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-500') }}">
-                            <span class="w-1.5 h-1.5 rounded-full {{ $form->status === 'published' ? 'bg-emerald-500' : ($form->status === 'closed' ? 'bg-red-500' : 'bg-gray-400') }}"></span>
+                        <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0 {{ $form->status->value === 'published' ? 'bg-emerald-50 text-emerald-700' : ($form->status->value === 'closed' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-500') }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $form->status->value === 'published' ? 'bg-emerald-500' : ($form->status->value === 'closed' ? 'bg-red-500' : 'bg-gray-400') }}"></span>
                             {{ $form->status }}
                         </span>
                     </a>

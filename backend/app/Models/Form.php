@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DataClassification;
 use App\Enums\FormStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,6 +49,7 @@ class Form extends Model
             'limit_one_response' => 'boolean',
             'allow_anonymous' => 'boolean',
             'allowed_domains' => 'array',
+            'data_classification' => DataClassification::class,
             'status' => FormStatus::class,
         ];
     }

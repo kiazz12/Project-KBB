@@ -52,7 +52,7 @@
                     <td style="font-family:monospace;font-size:7.5pt">{{ $submission->uuid }}</td>
                     <td>{{ \Carbon\Carbon::parse($submission->submitted_at)->format('d/m/Y H:i') }}</td>
                     @foreach($fields as $field)
-                        <td>{{ $submission->data->firstWhere('form_field_id', $field->id)?->value ?? '—' }}</td>
+                        <td>{{ strip_tags($submission->data->firstWhere('form_field_id', $field->id)?->value ?? '—') }}</td>
                     @endforeach
                 </tr>
             @endforeach

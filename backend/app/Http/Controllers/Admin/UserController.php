@@ -32,6 +32,7 @@ class UserController extends Controller
             'role' => ['required', Rule::in(['super_admin', 'admin'])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
+            'opd_id' => 'nullable|integer|exists:opds,id',
         ]);
 
         $user = User::create([
@@ -41,6 +42,7 @@ class UserController extends Controller
             'role' => $request->role,
             'nip' => $request->nip,
             'opd' => $request->opd,
+            'opd_id' => $request->opd_id,
         ]);
 
         AuditService::log('user.created', $user, "Admin panel: User '{$user->name}' created");
@@ -62,9 +64,10 @@ class UserController extends Controller
             'role' => ['sometimes', Rule::in(['super_admin', 'admin'])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
+            'opd_id' => 'nullable|integer|exists:opds,id',
         ]);
 
-        $data = $request->only(['name', 'email', 'role', 'nip', 'opd']);
+        $data = $request->only(['name', 'email', 'role', 'nip', 'opd', 'opd_id']);
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }

@@ -11,7 +11,7 @@
         <h1 class="text-2xl font-bold text-gray-900">{{ $form->title }}</h1>
         <p class="text-sm text-gray-500 mt-1">
             {{ $form->user?->name ?? 'Deleted' }} ·
-            <span class="{{ $form->status === 'published' ? 'text-emerald-600' : ($form->status === 'closed' ? 'text-red-500' : 'text-gray-400') }}">{{ $form->status }}</span> ·
+            <span class="{{ $form->status->value === 'published' ? 'text-emerald-600' : ($form->status->value === 'closed' ? 'text-red-500' : 'text-gray-400') }}">{{ $form->status }}</span> ·
             {{ $form->submissions_count }} pengiriman
         </p>
     </div>

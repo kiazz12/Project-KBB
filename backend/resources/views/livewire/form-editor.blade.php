@@ -45,7 +45,7 @@
                                 <button wire:click="editSection({{ $section->id }})" class="p-1 text-gray-400 hover:text-gray-700 transition" title="Edit Section">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                 </button>
-                                <button wire:click="deleteSection({{ $section->id }})" wire:confirm="Hapus section '{{ $section->title }}'?" class="p-1 text-red-400 hover:text-red-600 transition" title="Hapus Section">
+                                <button wire:click="deleteSection({{ $section->id }})" wire:confirm="Hapus section '{{ addslashes($section->title) }}'?" class="p-1 text-red-400 hover:text-red-600 transition" title="Hapus Section">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
@@ -70,7 +70,7 @@
                                         </div>
                                     </div>
                                     <button wire:click="editField({{ $field->id }})" class="text-xs text-kbb-700 hover:text-kbb-800 font-medium">Edit</button>
-                                    <button wire:click="deleteField({{ $field->id }})" wire:confirm="Hapus field '{{ $field->label }}'?" class="text-xs text-red-500 hover:text-red-700 font-medium">Hapus</button>
+                                    <button wire:click="deleteField({{ $field->id }})" wire:confirm="Hapus field '{{ addslashes($field->label) }}'?" class="text-xs text-red-500 hover:text-red-700 font-medium">Hapus</button>
                                 </div>
                             @empty
                                 <p class="text-xs text-gray-400 text-center py-4">Belum ada field di section ini.</p>
@@ -107,7 +107,7 @@
                                         </div>
                                     </div>
                                     <button wire:click="editField({{ $field->id }})" class="text-xs text-kbb-700 hover:text-kbb-800 font-medium">Edit</button>
-                                    <button wire:click="deleteField({{ $field->id }})" wire:confirm="Hapus field '{{ $field->label }}'?" class="text-xs text-red-500 hover:text-red-700 font-medium">Hapus</button>
+                                    <button wire:click="deleteField({{ $field->id }})" wire:confirm="Hapus field '{{ addslashes($field->label) }}'?" class="text-xs text-red-500 hover:text-red-700 font-medium">Hapus</button>
                                 </div>
                             @endforeach
                             @if ($form->sections->isEmpty())
@@ -273,7 +273,7 @@
                         <p class="text-xs text-gray-500 mb-1">Link Form</p>
                         <p class="text-sm font-medium text-kbb-700 truncate" id="publish-link">{{ $publishedUrl }}</p>
                     </div>
-                    <button onclick="copyPublishLink()"
+                    <button onclick="copyPublishLink(this)"
                         class="flex-shrink-0 bg-kbb-700 hover:bg-kbb-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
                         Salin
                     </button>
@@ -297,14 +297,13 @@
         </div>
     </div>
     <script>
-    function copyPublishLink() {
+    function copyPublishLink(btn) {
         var input = document.createElement('input');
         input.value = document.getElementById('publish-link').textContent;
         document.body.appendChild(input);
         input.select();
         document.execCommand('copy');
         document.body.removeChild(input);
-        var btn = event.currentTarget;
         btn.textContent = 'Tersalin!';
         setTimeout(function() { btn.textContent = 'Salin'; }, 2000);
     }

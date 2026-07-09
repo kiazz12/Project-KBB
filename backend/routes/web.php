@@ -38,4 +38,20 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/form/{slug}', [PageController::class, 'publicForm'])->name('public-form');
 
+Route::get('/uploads/{path}', function (string $path) {
+    abort_unless(auth()->check(), 401);
+
+    $valueInDb = 'uploads/' . $path;
+    $submissionData = \App\Models\SubmissionData::where('value', $valueInDb)->first();
+    abort_if(!$submissionData, 404);
+
+    $fullPath = storage_path('app/private/' . $valueInDb);
+    abort_if(!file_exists($fullPath), 404);
+
+    $form = $submissionData->submission->form;
+    abort_if(auth()->id() !== $form->user_id && !auth()->user()->isSuperAdmin(), 403);
+
+    return response()->file($fullPath);
+})->where('path', '.*')->name('uploads.show');
+
 Route::get('/', fn() => redirect('/login'));

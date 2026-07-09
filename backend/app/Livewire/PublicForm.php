@@ -196,8 +196,8 @@ class PublicForm extends Component
             'uuid' => Str::uuid(),
             'form_id' => $this->form->id,
             'user_id' => auth()->check() ? auth()->id() : null,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            'ip_address' => $this->form->collect_ip ? request()->ip() : null,
+            'user_agent' => $this->form->collect_ip ? request()->userAgent() : null,
             'submitted_at' => now(),
         ]);
 
@@ -205,7 +205,7 @@ class PublicForm extends Component
             $fieldModel = $this->form->fields->firstWhere('id', $fieldId);
 
             if ($fieldModel && $fieldModel->type->value === 'file' && $value instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-                $path = $value->store('uploads', 'public');
+                $path = $value->store('uploads', 'local');
                 $value = $path;
             }
 

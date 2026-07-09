@@ -51,7 +51,7 @@
             @php $maxCount = max($fa['counts']); @endphp
             @foreach($fa['counts'] as $value => $count)
                 <div class="flex items-center gap-3">
-                    <span class="text-sm text-gray-700 w-48 truncate">{{ $value ?: '(empty)' }}</span>
+                    <span class="text-sm text-gray-700 w-48 truncate">{{ strip_tags($value) ?: '(empty)' }}</span>
                     <div class="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
                         <div class="h-full bg-gold-400 rounded-full" style="width: {{ $maxCount > 0 ? ($count / $maxCount) * 100 : 0 }}%"></div>
                     </div>

@@ -9,16 +9,13 @@ class UserObserver
 {
     public function created(User $user): void
     {
-        if ($user->wasChanged('password')) {
-            unset($user->password);
-        }
         $this->notifySuperAdmins("User baru '{$user->name}' ({$user->email}) telah dibuat.");
     }
 
     public function updated(User $user): void
     {
         if ($user->wasChanged('password')) {
-            unset($user->password);
+            $user->makeHidden('password');
         }
 
         $changes = [];

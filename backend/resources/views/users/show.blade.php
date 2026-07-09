@@ -37,7 +37,7 @@
                                 <p class="text-sm font-medium text-gray-900 truncate">{{ $form->title }}</p>
                                 <p class="text-xs text-gray-400 mt-0.5">{{ $form->submissions_count }} pengiriman · {{ $form->fields_count }} field</p>
                             </div>
-                            <span class="text-xs px-2 py-0.5 rounded-full {{ $form->status === 'published' ? 'bg-emerald-100 text-emerald-700' : ($form->status === 'closed' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500') }}">
+                            <span class="text-xs px-2 py-0.5 rounded-full {{ $form->status->value === 'published' ? 'bg-emerald-100 text-emerald-700' : ($form->status->value === 'closed' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500') }}">
                                 {{ $form->status }}
                             </span>
                         </a>

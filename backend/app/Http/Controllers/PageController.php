@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Form;
+use App\Models\SubmissionData;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -295,6 +296,64 @@ class PageController extends Controller
         ]);
 
         return $pdf->download("{$form->slug}-submissions.pdf");
+    }
+
+    public function exportUangSakuPdf(Request $request, int $id): mixed
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('view', $form);
+
+        $fields = $form->fields()->orderBy('order')->get();
+        $submissions = $form->submissions()->with('data.formField')->latest()->get();
+
+        $pdf = Pdf::loadView('exports.uang-saku-pdf', [
+            'form' => $form,
+            'fields' => $fields,
+            'submissions' => $submissions,
+        ]);
+
+        return $pdf->download("tanda-terima-uang-saku-peserta.pdf");
+    }
+
+    public function exportPresensiPdf(Request $request, int $id): mixed
+    {
+        ini_set('memory_limit', '2G');
+
+        $form = Form::findOrFail($id);
+        $this->authorize('view', $form);
+
+        $fields = $form->fields()->orderBy('order')->get();
+
+        $submissionIds = $form->submissions()->orderBy('id')->pluck('id');
+
+        $submissionDataMap = [];
+        SubmissionData::whereIn('submission_id', $submissionIds)
+            ->with('formField')
+            ->orderBy('submission_id')
+            ->chunk(2000, function ($chunk) use (&$submissionDataMap) {
+                foreach ($chunk as $data) {
+                    if ($data->formField) {
+                        $submissionDataMap[$data->submission_id][] = $data;
+                    }
+                }
+            });
+
+        $submissions = [];
+        foreach ($submissionIds as $sid) {
+            if (isset($submissionDataMap[$sid])) {
+                $submissions[] = (object)['id' => $sid, 'data' => collect($submissionDataMap[$sid])];
+            }
+        }
+
+        $pdf = Pdf::loadView('exports.presensi-pdf', [
+            'form' => $form,
+            'fields' => $fields,
+            'submissions' => $submissions,
+            'showFooter' => true,
+            'offset' => 0,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download("daftar-hadir-presensi.pdf");
     }
 
     public function publicForm(string $slug)

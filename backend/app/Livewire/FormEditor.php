@@ -26,6 +26,10 @@ class FormEditor extends Component
     public string $fieldOptionsText = '';
     public ?int $fieldSectionId = null;
 
+    public string $fieldFormulaRef = '';
+    public string $fieldFormulaOp = 'multiply';
+    public string $fieldFormulaValue = '';
+
     public string $settingsTitle = '';
     public string $settingsDescription = '';
     public ?string $settingsStartsAt = null;
@@ -52,7 +56,7 @@ class FormEditor extends Component
     protected function rules()
     {
         return [
-            'fieldType' => 'required|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature',
+            'fieldType' => 'required|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature,computed',
             'fieldLabel' => 'required|string|max:255',
             'fieldPlaceholder' => 'nullable|string|max:255',
             'fieldHelpText' => 'nullable|string|max:500',
@@ -107,6 +111,12 @@ class FormEditor extends Component
         $this->fieldRequired = $field->required ?? false;
         $this->fieldOptionsText = $field->options ? implode("\n", $field->options) : '';
         $this->fieldSectionId = $field->section_id;
+
+        if ($field->formula) {
+            $this->fieldFormulaRef = (string) ($field->formula['ref_field_id'] ?? '');
+            $this->fieldFormulaOp = $field->formula['operation'] ?? 'multiply';
+            $this->fieldFormulaValue = (string) ($field->formula['value'] ?? '');
+        }
     }
 
     public function cancelEdit(): void
@@ -138,7 +148,17 @@ class FormEditor extends Component
             'required' => $this->fieldRequired,
             'options' => $options,
             'section_id' => $this->fieldSectionId ?: null,
+            'formula' => null,
         ];
+
+        if ($this->fieldType === 'computed' && $this->fieldFormulaRef) {
+            $data['formula'] = [
+                'ref_field_id' => (int) $this->fieldFormulaRef,
+                'operation' => $this->fieldFormulaOp,
+                'value' => is_numeric($this->fieldFormulaValue) ? (float) $this->fieldFormulaValue : null,
+            ];
+            $data['required'] = false;
+        }
 
         if ($this->editingFieldId) {
             $field = $this->form->fields()->findOrFail($this->editingFieldId);
@@ -377,5 +397,8 @@ class FormEditor extends Component
         $this->fieldRequired = false;
         $this->fieldOptionsText = '';
         $this->fieldSectionId = null;
+        $this->fieldFormulaRef = '';
+        $this->fieldFormulaOp = 'multiply';
+        $this->fieldFormulaValue = '';
     }
 }

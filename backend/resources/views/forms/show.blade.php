@@ -58,6 +58,15 @@
                 <a href="{{ route('forms.edit', $form) }}" class="block w-full text-center bg-kbb-700 hover:bg-kbb-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition">Edit Form</a>
                 <a href="{{ route('forms.submissions.index', $form) }}" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition">Lihat Data</a>
                 <a href="{{ route('forms.analytics', $form) }}" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition">Analytics</a>
+                <hr class="border-gray-200">
+                <a href="{{ route('forms.export.csv', $form) }}" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition">Download CSV</a>
+                <a href="{{ route('forms.export.pdf', $form) }}" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition">Download PDF</a>
+                @if(str_contains($form->slug, 'uang-saku'))
+                    <a href="{{ route('forms.export.uang-saku', $form) }}" class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">Download Tanda Terima</a>
+                @endif
+                @if(str_contains($form->slug, 'presensi') || str_contains($form->slug, 'transfer-knowledge'))
+                    <a href="{{ route('forms.export.presensi', $form) }}" class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">Download Daftar Hadir</a>
+                @endif
             </div>
         </div>
 

@@ -4,7 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Form;
 use App\Models\FormSubmission;
+use App\Models\Participant;
 use App\Models\SubmissionData;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -22,6 +24,11 @@ class PublicForm extends Component
     public int $currentStep = 1;
     public array $steps = [];
     public int $totalSteps = 1;
+
+    public string $participantSearch = '';
+    public array $participantResults = [];
+    public ?int $selectedParticipantId = null;
+    public bool $showParticipantSearch = false;
 
     public function mount(string $slug): void
     {
@@ -48,24 +55,28 @@ class PublicForm extends Component
 
         $this->form = $form;
 
+        $this->showParticipantSearch = false;
+
         $sections = $form->sections;
         $noSectionFields = $form->fields->whereNull('section_id');
 
         if ($sections->isEmpty()) {
-            $this->steps = [['title' => 'Form', 'fields' => $form->fields]];
+            $this->steps = [['title' => 'Form', 'fields' => $form->fields->reject->is_admin_only]];
             $this->totalSteps = 1;
         } else {
             $this->steps = [];
             foreach ($sections as $section) {
+                $visibleFields = $form->fields->where('section_id', $section->id)->reject->is_admin_only;
+                if ($visibleFields->isEmpty()) continue;
                 $this->steps[] = [
                     'title' => $section->title,
-                    'fields' => $form->fields->where('section_id', $section->id),
+                    'fields' => $visibleFields,
                 ];
             }
             if ($noSectionFields->isNotEmpty()) {
                 $this->steps[] = [
                     'title' => 'Lainnya',
-                    'fields' => $noSectionFields,
+                    'fields' => $noSectionFields->reject->is_admin_only,
                 ];
             }
             $this->totalSteps = count($this->steps);
@@ -75,6 +86,126 @@ class PublicForm extends Component
     public function render()
     {
         return view('livewire.public-form');
+    }
+
+    public function updatedParticipantSearch(): void
+    {
+        if (strlen($this->participantSearch) < 2) {
+            $this->participantResults = [];
+            return;
+        }
+
+        $this->participantResults = Participant::where('nama', 'like', "%{$this->participantSearch}%")
+            ->limit(20)
+            ->get()
+            ->toArray();
+    }
+
+    public function selectParticipant(int $participantId): void
+    {
+        $participant = Participant::find($participantId);
+        if (!$participant) return;
+
+        $this->selectedParticipantId = $participantId;
+
+        $linkedFormId = $this->form->settings['linked_form_id'] ?? null;
+        $presensiData = null;
+
+        if ($linkedFormId) {
+            $linkedSubmission = FormSubmission::where('form_id', $linkedFormId)
+                ->with('data.formField')
+                ->get()
+                ->filter(function ($sub) use ($participant) {
+                    return $sub->data->contains(function ($d) use ($participant) {
+                        return $d->formField && strtolower($d->formField->label) === 'nama lengkap'
+                            && strtolower(trim($d->value)) === strtolower(trim($participant->nama));
+                    });
+                })
+                ->first();
+
+            if ($linkedSubmission) {
+                $presensiData = [];
+                foreach ($linkedSubmission->data as $d) {
+                    if ($d->formField) {
+                        $presensiData[strtolower($d->formField->label)] = $d->value;
+                    }
+                }
+            }
+        }
+
+        foreach ($this->form->fields as $field) {
+            $label = strtolower($field->label);
+
+            if ($presensiData) {
+                if (str_contains($label, 'nama') && !str_contains($label, 'nik')) {
+                    $this->responses[$field->id] = $presensiData['nama lengkap'] ?? $participant->nama;
+                }
+                if (str_contains($label, 'instansi') || str_contains($label, 'opd')) {
+                    $this->responses[$field->id] = $presensiData['opd / institusi'] ?? $participant->opd_institusi;
+                }
+                if (str_contains($label, 'jabatan')) {
+                    $this->responses[$field->id] = $presensiData['jabatan'] ?? $participant->jabatan;
+                }
+                if (str_contains($label, 'nik') || $label === 'nik') {
+                    $this->responses[$field->id] = $presensiData['no. induk pegawai (nip)'] ?? '';
+                }
+            } else {
+                if (str_contains($label, 'nama') && !str_contains($label, 'nik')) {
+                    $this->responses[$field->id] = $participant->nama;
+                }
+                if (str_contains($label, 'instansi') || str_contains($label, 'opd')) {
+                    $this->responses[$field->id] = $participant->opd_institusi;
+                }
+                if (str_contains($label, 'jabatan')) {
+                    $this->responses[$field->id] = $participant->jabatan;
+                }
+                if ($label === 'role') {
+                    $this->responses[$field->id] = $participant->role;
+                }
+            }
+        }
+
+        $this->calculateComputedFields();
+        $this->participantResults = [];
+    }
+
+    public function updatedResponses($value, $key): void
+    {
+        $this->calculateComputedFields();
+    }
+
+    private function calculateComputedFields(): void
+    {
+        if (!$this->form) return;
+
+        foreach ($this->form->fields as $field) {
+            if ($field->type->value !== 'computed' || empty($field->formula)) continue;
+
+            $refFieldId = $field->formula['ref_field_id'] ?? null;
+            $operation = $field->formula['operation'] ?? 'multiply';
+            $constantValue = $field->formula['value'] ?? null;
+
+            if (!$refFieldId) continue;
+
+            $refValue = (float) ($this->responses[(string) $refFieldId] ?? 0);
+
+            if ($constantValue !== null) {
+                $refValue2 = (float) $constantValue;
+            } else {
+                $refField2Id = $field->formula['ref_field_id_2'] ?? null;
+                $refValue2 = $refField2Id ? (float) ($this->responses[(string) $refField2Id] ?? 0) : 0;
+            }
+
+            $result = match ($operation) {
+                'multiply' => $refValue * $refValue2,
+                'add' => $refValue + $refValue2,
+                'subtract' => $refValue - $refValue2,
+                'divide' => $refValue2 != 0 ? $refValue / $refValue2 : 0,
+                default => $refValue,
+            };
+
+            $this->responses[$field->id] = number_format($result, 0, '.', '');
+        }
     }
 
     public function nextStep(): void
@@ -101,6 +232,8 @@ class PublicForm extends Component
         $messages = [];
 
         foreach ($step['fields'] as $field) {
+            if ($field->type->value === 'computed' || $field->is_admin_only) continue;
+
             $key = "responses.{$field->id}";
             $fieldRules = [];
 
@@ -149,10 +282,14 @@ class PublicForm extends Component
     {
         if (!$this->form) return;
 
+        $this->calculateComputedFields();
+
         $validationRules = [];
         $validationMessages = [];
 
         foreach ($this->form->fields as $field) {
+            if ($field->type->value === 'computed' || $field->is_admin_only) continue;
+
             $key = "responses.{$field->id}";
             $rules = [];
 
@@ -203,6 +340,8 @@ class PublicForm extends Component
 
         foreach ($this->responses as $fieldId => $value) {
             $fieldModel = $this->form->fields->firstWhere('id', $fieldId);
+
+            if ($fieldModel && $fieldModel->is_admin_only) continue;
 
             if ($fieldModel && $fieldModel->type->value === 'file' && $value instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
                 $path = $value->store('uploads', 'local');

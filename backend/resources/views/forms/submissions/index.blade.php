@@ -22,6 +22,12 @@
     <div class="flex gap-2">
         <a href="{{ route('forms.export.csv', $form) }}" class="bg-kbb-700 hover:bg-kbb-800 text-white text-sm px-4 py-2 rounded-lg transition">Export CSV</a>
         <a href="{{ route('forms.export.pdf', $form) }}" class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg transition">Export PDF</a>
+        @if(str_contains($form->slug, 'uang-saku'))
+            <a href="{{ route('forms.export.uang-saku', $form) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg transition">Download Tanda Terima</a>
+        @endif
+        @if(str_contains($form->slug, 'presensi') || str_contains($form->slug, 'transfer-knowledge'))
+            <a href="{{ route('forms.export.presensi', $form) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg transition">Download Daftar Hadir</a>
+        @endif
     </div>
 </div>
 

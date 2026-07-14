@@ -17,4 +17,5 @@ enum FieldType: string
     case Heading = 'heading';
     case Paragraph = 'paragraph';
     case Signature = 'signature';
+    case Computed = 'computed';
 }

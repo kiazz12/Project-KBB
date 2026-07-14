@@ -24,6 +24,8 @@ class FormField extends Model
         'default_value',
         'conditions',
         'allow_other',
+        'formula',
+        'is_admin_only',
     ];
 
     protected function casts(): array
@@ -32,6 +34,8 @@ class FormField extends Model
             'options' => 'array',
             'required' => 'boolean',
             'type' => FieldType::class,
+            'formula' => 'array',
+            'is_admin_only' => 'boolean',
         ];
     }
 

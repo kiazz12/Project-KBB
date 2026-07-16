@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Notification;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class NotificationBell extends Component
@@ -20,11 +21,11 @@ class NotificationBell extends Component
 
     public function refresh(): void
     {
-        $this->unreadCount = Notification::where('user_id', auth()->id())
+        $this->unreadCount = Notification::where('user_id', Auth::id())
             ->unread()
             ->count();
 
-        $this->recentNotifications = Notification::where('user_id', auth()->id())
+        $this->recentNotifications = Notification::where('user_id', Auth::id())
             ->unread()
             ->latest()
             ->limit(5)
@@ -42,14 +43,14 @@ class NotificationBell extends Component
 
     public function markRead(int $notificationId): void
     {
-        $notif = Notification::where('user_id', auth()->id())->findOrFail($notificationId);
+        $notif = Notification::where('user_id', Auth::id())->findOrFail($notificationId);
         $notif->update(['read_at' => now()]);
         $this->refresh();
     }
 
     public function markAllRead(): void
     {
-        Notification::where('user_id', auth()->id())
+        Notification::where('user_id', Auth::id())
             ->unread()
             ->update(['read_at' => now()]);
         $this->refresh();

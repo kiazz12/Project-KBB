@@ -9,12 +9,13 @@ use App\Models\User;
 use App\Services\AuditService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PageController extends Controller
 {
     public function login()
     {
-        if (auth()->check()) {
+        if (Auth::check()) {
             return redirect('/dashboard');
         }
 
@@ -23,8 +24,10 @@ class PageController extends Controller
 
     public function dashboard()
     {
-        $isSuper = auth()->user()->isSuperAdmin();
-        $userId = auth()->id();
+        /** @var User $user */
+        $user = Auth::user();
+        $isSuper = $user->isSuperAdmin();
+        $userId = Auth::id();
 
         $totalForms = $isSuper ? Form::count() : Form::where('user_id', $userId)->count();
         $publishedForms = $isSuper ? Form::where('status', 'published')->count() : Form::where('user_id', $userId)->where('status', 'published')->count();
@@ -95,11 +98,13 @@ class PageController extends Controller
 
     public function formsIndex(Request $request)
     {
-        $isSuper = auth()->user()->isSuperAdmin();
+        /** @var User $user */
+        $user = Auth::user();
+        $isSuper = $user->isSuperAdmin();
         $query = Form::with('user:id,name')->withCount(['fields', 'submissions']);
 
         if (! $isSuper) {
-            $query->where('user_id', auth()->id());
+            $query->where('user_id', Auth::id());
         }
 
         if ($search = $request->search) {

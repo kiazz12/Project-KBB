@@ -4,7 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Form;
 use App\Services\AuditService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 class CreateForm extends Component
@@ -21,10 +23,10 @@ class CreateForm extends Component
         ];
     }
 
+    #[Layout('layouts.app')]
     public function render()
     {
-        return view('livewire.create-form')
-            ->layout('layouts.app');
+        return view('livewire.create-form');
     }
 
     public function save()
@@ -41,7 +43,7 @@ class CreateForm extends Component
 
         $form = Form::create([
             'uuid' => Str::uuid(),
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'title' => $this->title,
             'description' => $this->description,
             'slug' => $slug,

@@ -5,6 +5,7 @@ namespace App\Domains\Auth\Services;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 
 class AuthorizationService
 {
@@ -82,7 +83,7 @@ class AuthorizationService
         return $user->isSuperAdmin();
     }
 
-    public function applyFormAccessConstraints($query, User $user)
+    public function applyFormAccessConstraints(Builder $query, User $user)
     {
         if ($user->isSuperAdmin()) {
             return $query;
@@ -98,7 +99,7 @@ class AuthorizationService
         });
     }
 
-    public function applySubmissionAccessConstraints($query, User $user)
+    public function applySubmissionAccessConstraints(Builder $query, User $user)
     {
         if ($user->isSuperAdmin()) {
             return $query;

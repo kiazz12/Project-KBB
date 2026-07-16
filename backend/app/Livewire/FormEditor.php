@@ -6,7 +6,9 @@ use App\Models\Form;
 use App\Models\FormField;
 use App\Models\FormSection;
 use App\Services\AuditService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 class FormEditor extends Component
@@ -110,12 +112,12 @@ class FormEditor extends Component
         $this->settingsRedirectUrl = $form->redirect_url ?? '';
     }
 
+    #[Layout('layouts.app')]
     public function render()
     {
         $this->form->load(['fields.section', 'sections']);
 
-        return view('livewire.form-editor')
-            ->layout('layouts.app');
+        return view('livewire.form-editor');
     }
 
     public function selectTab(string $tab): void
@@ -254,7 +256,7 @@ class FormEditor extends Component
         $this->saveFieldOrder($fields);
     }
 
-    private function saveFieldOrder($fields): void
+    private function saveFieldOrder(Collection $fields): void
     {
         foreach ($fields as $i => $field) {
             $field->update(['order' => $i + 1]);

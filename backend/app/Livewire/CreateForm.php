@@ -10,6 +10,7 @@ use Livewire\Component;
 class CreateForm extends Component
 {
     public string $title = '';
+
     public string $description = '';
 
     protected function rules()
@@ -34,7 +35,7 @@ class CreateForm extends Component
         $baseSlug = $slug;
         $counter = 1;
         while (Form::where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 

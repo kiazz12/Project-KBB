@@ -8,7 +8,9 @@ use Livewire\Component;
 class NotificationBell extends Component
 {
     public int $unreadCount = 0;
+
     public array $recentNotifications = [];
+
     public bool $showDropdown = false;
 
     public function mount(): void
@@ -32,7 +34,7 @@ class NotificationBell extends Component
 
     public function toggleDropdown(): void
     {
-        $this->showDropdown = !$this->showDropdown;
+        $this->showDropdown = ! $this->showDropdown;
         if ($this->showDropdown) {
             $this->refresh();
         }

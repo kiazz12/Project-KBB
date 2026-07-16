@@ -7,7 +7,6 @@ use App\Models\FormField;
 use App\Models\FormSection;
 use App\Services\AuditService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class FormEditor extends Component
@@ -15,42 +14,69 @@ class FormEditor extends Component
     use AuthorizesRequests;
 
     public Form $form;
+
     public string $tab = 'fields';
+
     public ?int $editingFieldId = null;
 
     public string $fieldType = 'text';
+
     public string $fieldLabel = '';
+
     public string $fieldPlaceholder = '';
+
     public string $fieldHelpText = '';
+
     public bool $fieldRequired = false;
+
     public string $fieldOptionsText = '';
+
     public ?int $fieldSectionId = null;
 
     public string $fieldFormulaRef = '';
+
     public string $fieldFormulaOp = 'multiply';
+
     public string $fieldFormulaValue = '';
 
     public string $settingsTitle = '';
+
     public string $settingsDescription = '';
+
     public ?string $settingsStartsAt = null;
+
     public ?string $settingsEndsAt = null;
+
     public int $settingsMaxSubmissions = 0;
+
     public bool $settingsRequireAuth = false;
+
     public bool $settingsCollectIp = true;
+
     public bool $settingsShowKbbLogo = true;
+
     public bool $settingsLimitOneResponse = false;
+
     public string $settingsConfirmationType = 'message';
+
     public string $settingsConfirmationMessage = '';
+
     public string $settingsRedirectUrl = '';
 
     public string $message = '';
+
     public string $messageType = 'success';
+
     public bool $showPublishModal = false;
+
     public string $publishedUrl = '';
 
     public ?int $editingSectionId = null;
+
     public string $sectionTitle = '';
+
     public string $sectionDescription = '';
+
     public bool $showSectionForm = false;
 
     protected function rules()
@@ -87,6 +113,7 @@ class FormEditor extends Component
     public function render()
     {
         $this->form->load(['fields.section', 'sections']);
+
         return view('livewire.form-editor')
             ->layout('layouts.app');
     }
@@ -100,6 +127,7 @@ class FormEditor extends Component
     {
         if ($fieldId === -1) {
             $this->resetFieldForm();
+
             return;
         }
         $field = $this->form->fields()->findOrFail($fieldId);
@@ -136,6 +164,7 @@ class FormEditor extends Component
             if (empty($options)) {
                 $this->message = 'Tipe field ini membutuhkan minimal 1 opsi.';
                 $this->messageType = 'error';
+
                 return;
             }
         }
@@ -198,8 +227,10 @@ class FormEditor extends Component
     public function moveFieldUp(int $fieldId): void
     {
         $fields = $this->form->fields()->orderBy('order')->get();
-        $index = $fields->search(fn($f) => $f->id === $fieldId);
-        if ($index === false || $index === 0) return;
+        $index = $fields->search(fn ($f) => $f->id === $fieldId);
+        if ($index === false || $index === 0) {
+            return;
+        }
 
         $temp = $fields[$index];
         $fields[$index] = $fields[$index - 1];
@@ -211,8 +242,10 @@ class FormEditor extends Component
     public function moveFieldDown(int $fieldId): void
     {
         $fields = $this->form->fields()->orderBy('order')->get();
-        $index = $fields->search(fn($f) => $f->id === $fieldId);
-        if ($index === false || $index === $fields->count() - 1) return;
+        $index = $fields->search(fn ($f) => $f->id === $fieldId);
+        if ($index === false || $index === $fields->count() - 1) {
+            return;
+        }
 
         $temp = $fields[$index];
         $fields[$index] = $fields[$index + 1];
@@ -243,7 +276,7 @@ class FormEditor extends Component
         $this->authorize('update', $this->form);
         $this->form->update(['status' => 'published']);
         AuditService::log('form_published', $this->form, "Form '{$this->form->title}' published");
-        $this->publishedUrl = url('/form/' . $this->form->slug);
+        $this->publishedUrl = url('/form/'.$this->form->slug);
         $this->showPublishModal = true;
     }
 
@@ -360,8 +393,10 @@ class FormEditor extends Component
     public function moveSectionUp(int $sectionId): void
     {
         $sections = $this->form->sections()->orderBy('order')->get();
-        $index = $sections->search(fn($s) => $s->id === $sectionId);
-        if ($index === false || $index === 0) return;
+        $index = $sections->search(fn ($s) => $s->id === $sectionId);
+        if ($index === false || $index === 0) {
+            return;
+        }
 
         $temp = $sections[$index];
         $sections[$index] = $sections[$index - 1];
@@ -375,8 +410,10 @@ class FormEditor extends Component
     public function moveSectionDown(int $sectionId): void
     {
         $sections = $this->form->sections()->orderBy('order')->get();
-        $index = $sections->search(fn($s) => $s->id === $sectionId);
-        if ($index === false || $index === $sections->count() - 1) return;
+        $index = $sections->search(fn ($s) => $s->id === $sectionId);
+        if ($index === false || $index === $sections->count() - 1) {
+            return;
+        }
 
         $temp = $sections[$index];
         $sections[$index] = $sections[$index + 1];

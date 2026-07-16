@@ -125,7 +125,7 @@
                 </button>
             </div>
 
-            <div class="lg:col-span-2 space-y-4">
+            <div class="lg:col-span-2 space-y-4 lg:sticky lg:top-4 lg:self-start">
                 @if ($showSectionForm)
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                         <h3 class="text-sm font-semibold text-gray-900 mb-4">{{ $editingSectionId ? 'Edit Section' : 'Buat Section Baru' }}</h3>

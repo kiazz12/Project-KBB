@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('form_sections')) return;
+        if (Schema::hasTable('form_sections')) {
+            return;
+        }
 
         Schema::create('form_sections', function (Blueprint $table) {
             $table->id();

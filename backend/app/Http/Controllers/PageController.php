@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Form;
+use App\Models\FormSubmission;
 use App\Models\SubmissionData;
 use App\Models\User;
+use App\Services\AuditService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PageController extends Controller
 {
@@ -31,31 +32,31 @@ class PageController extends Controller
         $closedForms = $isSuper ? Form::where('status', 'closed')->count() : Form::where('user_id', $userId)->where('status', 'closed')->count();
 
         $totalSubmissions = $isSuper
-            ? \App\Models\FormSubmission::count()
-            : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->count();
+            ? FormSubmission::count()
+            : FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->count();
         $submissionsToday = $isSuper
-            ? \App\Models\FormSubmission::whereDate('submitted_at', today())->count()
-            : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereDate('submitted_at', today())->count();
+            ? FormSubmission::whereDate('submitted_at', today())->count()
+            : FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereDate('submitted_at', today())->count();
         $submissionsThisWeek = $isSuper
-            ? \App\Models\FormSubmission::whereBetween('submitted_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
-            : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereBetween('submitted_at', [now()->startOfWeek(), now()->endOfWeek()])->count();
+            ? FormSubmission::whereBetween('submitted_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
+            : FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereBetween('submitted_at', [now()->startOfWeek(), now()->endOfWeek()])->count();
         $totalUsers = $isSuper ? User::count() : null;
 
         $recentForms = Form::withCount(['fields', 'submissions'])
-            ->when(!$isSuper, fn($q) => $q->where('user_id', $userId))
+            ->when(! $isSuper, fn ($q) => $q->where('user_id', $userId))
             ->latest()
             ->limit(5)
             ->get();
 
         $topForms = Form::with('user:id,name')
             ->withCount('submissions')
-            ->when(!$isSuper, fn($q) => $q->where('user_id', $userId))
+            ->when(! $isSuper, fn ($q) => $q->where('user_id', $userId))
             ->whereHas('submissions')
             ->orderByDesc('submissions_count')
             ->limit(5)
             ->get();
 
-        $latestSubmissions = \App\Models\FormSubmission::with(['form:id,title,user_id', 'form.user:id,name'])
+        $latestSubmissions = FormSubmission::with(['form:id,title,user_id', 'form.user:id,name'])
             ->whereIn('form_id', function ($q) use ($isSuper, $userId) {
                 if ($isSuper) {
                     $q->select('id')->from('forms');
@@ -78,8 +79,8 @@ class PageController extends Controller
             $date = now()->subDays($i)->format('Y-m-d');
             $weekDays[] = now()->subDays($i)->translatedFormat('D');
             $count = $isSuper
-                ? \App\Models\FormSubmission::whereDate('submitted_at', $date)->count()
-                : \App\Models\FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereDate('submitted_at', $date)->count();
+                ? FormSubmission::whereDate('submitted_at', $date)->count()
+                : FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereDate('submitted_at', $date)->count();
             $weekSubmissions[] = $count;
         }
 
@@ -97,7 +98,7 @@ class PageController extends Controller
         $isSuper = auth()->user()->isSuperAdmin();
         $query = Form::with('user:id,name')->withCount(['fields', 'submissions']);
 
-        if (!$isSuper) {
+        if (! $isSuper) {
             $query->where('user_id', auth()->id());
         }
 
@@ -123,7 +124,7 @@ class PageController extends Controller
 
     public function formsShow(int $id)
     {
-        $form = Form::with(['fields' => fn($q) => $q->orderBy('order')])
+        $form = Form::with(['fields' => fn ($q) => $q->orderBy('order')])
             ->withCount(['fields', 'submissions', 'sections'])
             ->findOrFail($id);
         $this->authorize('view', $form);
@@ -133,7 +134,7 @@ class PageController extends Controller
 
     public function formsEdit(int $id)
     {
-        $form = Form::with(['fields' => fn($q) => $q->orderBy('order')])->findOrFail($id);
+        $form = Form::with(['fields' => fn ($q) => $q->orderBy('order')])->findOrFail($id);
         $this->authorize('update', $form);
 
         return view('forms.edit', compact('form'));
@@ -183,7 +184,7 @@ class PageController extends Controller
         $query = $form->submissions()->with('data.formField');
 
         if ($search = request('search')) {
-            $submissionIds = \App\Models\SubmissionData::where('value', 'like', "%{$search}%")
+            $submissionIds = SubmissionData::where('value', 'like', "%{$search}%")
                 ->whereIn('submission_id', $form->submissions()->pluck('id'))
                 ->pluck('submission_id')
                 ->unique();
@@ -200,11 +201,11 @@ class PageController extends Controller
         $form = Form::findOrFail($formId);
         $this->authorize('view', $form);
 
-        $submission = \App\Models\FormSubmission::findOrFail($id);
+        $submission = FormSubmission::findOrFail($id);
         $submission->data()->delete();
         $submission->delete();
 
-        \App\Services\AuditService::log('submission_deleted', [
+        AuditService::log('submission_deleted', [
             'form_id' => $form->id,
             'submission_id' => $submission->id,
         ]);
@@ -217,7 +218,7 @@ class PageController extends Controller
         $form = Form::findOrFail($formId);
         $this->authorize('view', $form);
 
-        $submission = \App\Models\FormSubmission::with('data.formField')->findOrFail($id);
+        $submission = FormSubmission::with('data.formField')->findOrFail($id);
 
         return view('forms.submissions.show', compact('form', 'submission'));
     }
@@ -247,7 +248,7 @@ class PageController extends Controller
         $form = Form::findOrFail($id);
         $this->authorize('view', $form);
 
-        if ($form->data_classification && !$form->data_classification->canExport()) {
+        if ($form->data_classification && ! $form->data_classification->canExport()) {
             return redirect()->back()->with('error', 'Form dengan klasifikasi ini tidak dapat diexport.');
         }
 
@@ -282,7 +283,7 @@ class PageController extends Controller
         $form = Form::findOrFail($id);
         $this->authorize('view', $form);
 
-        if ($form->data_classification && !$form->data_classification->canExport()) {
+        if ($form->data_classification && ! $form->data_classification->canExport()) {
             return redirect()->back()->with('error', 'Form dengan klasifikasi ini tidak dapat diexport.');
         }
 
@@ -312,7 +313,7 @@ class PageController extends Controller
             'submissions' => $submissions,
         ]);
 
-        return $pdf->download("tanda-terima-uang-saku-peserta.pdf");
+        return $pdf->download('tanda-terima-uang-saku-peserta.pdf');
     }
 
     public function exportPresensiPdf(Request $request, int $id): mixed
@@ -341,7 +342,7 @@ class PageController extends Controller
         $submissions = [];
         foreach ($submissionIds as $sid) {
             if (isset($submissionDataMap[$sid])) {
-                $submissions[] = (object)['id' => $sid, 'data' => collect($submissionDataMap[$sid])];
+                $submissions[] = (object) ['id' => $sid, 'data' => collect($submissionDataMap[$sid])];
             }
         }
 
@@ -353,7 +354,7 @@ class PageController extends Controller
             'offset' => 0,
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->download("daftar-hadir-presensi.pdf");
+        return $pdf->download('daftar-hadir-presensi.pdf');
     }
 
     public function publicForm(string $slug)

@@ -6,12 +6,10 @@ use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\SubmissionData;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PublicFormService
 {
-    /**
-     * Get published form by slug
-     */
     public function getFormBySlug(string $slug): ?Form
     {
         return Form::where('slug', $slug)
@@ -20,20 +18,15 @@ class PublicFormService
             ->first();
     }
 
-    /**
-     * Submit public form response
-     */
     public function submitForm(Form $form, array $data): ?FormSubmission
     {
         return DB::transaction(function () use ($form, $data) {
-            // Create submission
             $submission = FormSubmission::create([
-                'uuid' => (string) \Illuminate\Support\Str::uuid(),
+                'uuid' => (string) Str::uuid(),
                 'form_id' => $form->id,
                 'submitted_at' => now(),
             ]);
 
-            // Store field responses
             foreach ($data as $fieldId => $value) {
                 SubmissionData::create([
                     'submission_id' => $submission->id,
@@ -46,9 +39,6 @@ class PublicFormService
         });
     }
 
-    /**
-     * Validate public form submission
-     */
     public function validateSubmission(Form $form, array $data): array
     {
         $errors = [];
@@ -57,6 +47,7 @@ class PublicFormService
                 $errors[$field->id] = "{$field->label} is required";
             }
         });
+
         return $errors;
     }
 }

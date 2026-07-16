@@ -64,21 +64,22 @@ class DummyFormSeeder extends Seeder
     ];
 
     protected array $formDefs = [];
+
     protected array $fieldSets = [];
 
     public function __construct()
     {
         $this->formDefs = [
             'kependudukan' => ['title' => 'Pendataan Warga', 'description' => 'Formulir pendataan warga untuk keperluan administrasi kependudukan.', 'count' => 10],
-            'survey'       => ['title' => 'Survey Kepuasan Masyarakat', 'description' => 'Survey untuk mengukur tingkat kepuasan masyarakat terhadap pelayanan publik.', 'count' => 12],
-            'pendaftaran'  => ['title' => 'Pendaftaran Kegiatan', 'description' => 'Formulir pendaftaran peserta kegiatan dan pelatihan.', 'count' => 8],
-            'pengaduan'    => ['title' => 'Pengaduan Masyarakat', 'description' => 'Formulir untuk menyampaikan pengaduan, saran, dan masukan.', 'count' => 6],
-            'inventaris'   => ['title' => 'Data Inventaris', 'description' => 'Formulir pencatatan inventaris barang dan aset daerah.', 'count' => 6],
-            'kegiatan'     => ['title' => 'Laporan Kegiatan Harian', 'description' => 'Laporan pelaksanaan kegiatan harian di lingkungan kecamatan.', 'count' => 8],
-            'tamu'         => ['title' => 'Buku Tamu', 'description' => 'Formulir pencatatan tamu yang berkunjung ke kantor.', 'count' => 15],
-            'izin'         => ['title' => 'Permohonan Izin', 'description' => 'Formulir permohonan izin kegiatan dan penggunaan fasilitas.', 'count' => 7],
-            'bantuan'      => ['title' => 'Data Penerima Bantuan', 'description' => 'Pendataan calon penerima bantuan sosial.', 'count' => 10],
-            'aset'         => ['title' => 'Peminjaman Aset', 'description' => 'Formulir peminjaman aset dan perlengkapan kantor.', 'count' => 5],
+            'survey' => ['title' => 'Survey Kepuasan Masyarakat', 'description' => 'Survey untuk mengukur tingkat kepuasan masyarakat terhadap pelayanan publik.', 'count' => 12],
+            'pendaftaran' => ['title' => 'Pendaftaran Kegiatan', 'description' => 'Formulir pendaftaran peserta kegiatan dan pelatihan.', 'count' => 8],
+            'pengaduan' => ['title' => 'Pengaduan Masyarakat', 'description' => 'Formulir untuk menyampaikan pengaduan, saran, dan masukan.', 'count' => 6],
+            'inventaris' => ['title' => 'Data Inventaris', 'description' => 'Formulir pencatatan inventaris barang dan aset daerah.', 'count' => 6],
+            'kegiatan' => ['title' => 'Laporan Kegiatan Harian', 'description' => 'Laporan pelaksanaan kegiatan harian di lingkungan kecamatan.', 'count' => 8],
+            'tamu' => ['title' => 'Buku Tamu', 'description' => 'Formulir pencatatan tamu yang berkunjung ke kantor.', 'count' => 15],
+            'izin' => ['title' => 'Permohonan Izin', 'description' => 'Formulir permohonan izin kegiatan dan penggunaan fasilitas.', 'count' => 7],
+            'bantuan' => ['title' => 'Data Penerima Bantuan', 'description' => 'Pendataan calon penerima bantuan sosial.', 'count' => 10],
+            'aset' => ['title' => 'Peminjaman Aset', 'description' => 'Formulir peminjaman aset dan perlengkapan kantor.', 'count' => 5],
         ];
 
         $this->fieldSets = [
@@ -232,10 +233,12 @@ class DummyFormSeeder extends Seeder
     public function run(): void
     {
         $users = User::all();
-        if ($users->isEmpty()) return;
+        if ($users->isEmpty()) {
+            return;
+        }
 
         $this->command->info('— — — — — — — — — — — — — — — — — — — —');
-        $this->command->info('  DummyFormSeeder: Seeding ' . $users->count() . ' users');
+        $this->command->info('  DummyFormSeeder: Seeding '.$users->count().' users');
         $this->command->info('— — — — — — — — — — — — — — — — — — — —');
 
         $themeKeys = array_keys($this->formDefs);
@@ -264,19 +267,19 @@ class DummyFormSeeder extends Seeder
                     $fieldDefs = $this->fieldSets[$theme];
 
                     $form = Form::create([
-                        'uuid'                 => (string) Str::uuid(),
-                        'user_id'              => $user->id,
-                        'title'                => $def['title'],
-                        'description'          => $def['description'],
-                        'slug'                 => 'dummy-' . $theme . '-' . Str::random(4),
-                        'status'               => 'published',
-                        'settings'             => [
-                            'collect_ip'    => true,
+                        'uuid' => (string) Str::uuid(),
+                        'user_id' => $user->id,
+                        'title' => $def['title'],
+                        'description' => $def['description'],
+                        'slug' => 'dummy-'.$theme.'-'.Str::random(4),
+                        'status' => 'published',
+                        'settings' => [
+                            'collect_ip' => true,
                             'show_kbb_logo' => true,
                         ],
                         'confirmation_message' => 'Terima kasih, data Anda berhasil dikirim.',
-                        'confirmation_type'    => 'message',
-                        'limit_one_response'   => false,
+                        'confirmation_type' => 'message',
+                        'limit_one_response' => false,
                     ]);
 
                     $fieldRows = [];
@@ -305,14 +308,14 @@ class DummyFormSeeder extends Seeder
                     $submissionRows = [];
                     for ($s = 0; $s < $submissionCount; $s++) {
                         $submissionRows[] = [
-                            'uuid'         => (string) Str::uuid(),
-                            'form_id'      => $form->id,
-                            'user_id'      => null,
-                            'ip_address'   => $this->randomIP(),
-                            'user_agent'   => $this->randomUserAgent(),
+                            'uuid' => (string) Str::uuid(),
+                            'form_id' => $form->id,
+                            'user_id' => null,
+                            'ip_address' => $this->randomIP(),
+                            'user_agent' => $this->randomUserAgent(),
                             'submitted_at' => $this->randomDate($s),
-                            'created_at'   => $now,
-                            'updated_at'   => $now,
+                            'created_at' => $now,
+                            'updated_at' => $now,
                         ];
                     }
                     FormSubmission::insert($submissionRows);
@@ -326,9 +329,9 @@ class DummyFormSeeder extends Seeder
                                 $allSubmissionData[] = [
                                     'submission_id' => $submission->id,
                                     'form_field_id' => $field->id,
-                                    'value'         => $value,
-                                    'created_at'    => $now,
-                                    'updated_at'    => $now,
+                                    'value' => $value,
+                                    'created_at' => $now,
+                                    'updated_at' => $now,
                                 ];
                             }
                         }
@@ -339,7 +342,7 @@ class DummyFormSeeder extends Seeder
                 }
             }
 
-            if (!empty($allSubmissionData)) {
+            if (! empty($allSubmissionData)) {
                 foreach (array_chunk($allSubmissionData, 500) as $chunk) {
                     SubmissionData::insert($chunk);
                 }
@@ -355,7 +358,8 @@ class DummyFormSeeder extends Seeder
     {
         $prefixes = ['192.168', '10.0', '172.16', '100.64', '203.190'];
         $pref = $prefixes[array_rand($prefixes)];
-        return "{$pref}." . mt_rand(1, 254) . '.' . mt_rand(1, 254);
+
+        return "{$pref}.".mt_rand(1, 254).'.'.mt_rand(1, 254);
     }
 
     protected function randomUserAgent(): string
@@ -372,6 +376,7 @@ class DummyFormSeeder extends Seeder
             'Mozilla/5.0 (Linux; Android 13; Samsung Galaxy S23) AppleWebKit/537.36 Chrome/119.0.0.0 Mobile Safari/537.36',
             'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148',
         ];
+
         return $agents[array_rand($agents)];
     }
 
@@ -381,6 +386,7 @@ class DummyFormSeeder extends Seeder
         $hour = mt_rand(7, 21);
         $minute = mt_rand(0, 59);
         $second = mt_rand(0, 59);
+
         return now()->subDays($daysAgo)->setTime($hour, $minute, $second)->format('Y-m-d H:i:s');
     }
 
@@ -396,8 +402,11 @@ class DummyFormSeeder extends Seeder
         $cumulative = 0;
         foreach ($items as $i => $item) {
             $cumulative += $weights[$i % count($weights)];
-            if ($rand <= $cumulative) return $item;
+            if ($rand <= $cumulative) {
+                return $item;
+            }
         }
+
         return $items[0];
     }
 
@@ -433,15 +442,19 @@ class DummyFormSeeder extends Seeder
             case 'select':
             case 'radio':
                 $options = $field->options ?? [];
+
                 return empty($options) ? '' : $this->randomOf($options);
 
             case 'checkbox':
                 $options = $field->options ?? [];
-                if (empty($options)) return '';
+                if (empty($options)) {
+                    return '';
+                }
                 $count = mt_rand(1, min(count($options), 3));
                 $keys = array_rand($options, $count);
                 $keys = is_array($keys) ? $keys : [$keys];
-                $selected = array_map(fn($k) => $options[$k], $keys);
+                $selected = array_map(fn ($k) => $options[$k], $keys);
+
                 return implode(', ', $selected);
         }
 
@@ -451,46 +464,51 @@ class DummyFormSeeder extends Seeder
     protected function generateTextValue(string $label, int $subIndex): string
     {
         if (str_contains($label, 'NIK')) {
-            $nik = mt_rand(320101, 320499) . mt_rand(100101, 311299) . mt_rand(0001, 9999) . mt_rand(0001, 9999);
+            $nik = mt_rand(320101, 320499).mt_rand(100101, 311299).mt_rand(0001, 9999).mt_rand(0001, 9999);
+
             return (string) $nik;
         }
         if (str_contains($label, 'Nama')) {
             $depan = $this->randomOf(array_merge(static::$namaDepanLaki, static::$namaDepanPerempuan));
             $belakang = $this->randomOf(static::$namaBelakang);
-            return $depan . ' ' . $belakang;
+
+            return $depan.' '.$belakang;
         }
         if (str_contains($label, 'WhatsApp') || str_contains($label, 'Telepon') || str_contains($label, 'Telpon')) {
-            return '08' . mt_rand(100000000, 999999999);
+            return '08'.mt_rand(100000000, 999999999);
         }
         if (str_contains($label, 'Pekerjaan')) {
             return $this->randomOf(static::$pekerjaan);
         }
         if (str_contains($label, 'Lokasi')) {
-            return $this->randomOf(static::$kecamatan) . ' - ' . $this->randomOf(['Kantor Bupati', 'Gedung D', 'Lantai 2 Ruang ' . mt_rand(201, 215), 'Gudang Utama', 'Ruang Server']);
+            return $this->randomOf(static::$kecamatan).' - '.$this->randomOf(['Kantor Bupati', 'Gedung D', 'Lantai 2 Ruang '.mt_rand(201, 215), 'Gudang Utama', 'Ruang Server']);
         }
         if (str_contains($label, 'Pemohon') || str_contains($label, 'Pelapor')) {
             $depan = $this->randomOf(array_merge(static::$namaDepanLaki, static::$namaDepanPerempuan));
             $belakang = $this->randomOf(static::$namaBelakang);
-            return $depan . ' ' . $belakang;
+
+            return $depan.' '.$belakang;
         }
         if (str_contains($label, 'Kegiatan') || str_contains($label, 'Barang')) {
             return $this->randomOf(static::$namaBarang);
         }
         if (str_contains($label, 'Instansi') || str_contains($label, 'Perusahaan')) {
-            return $this->randomOf(['PT ' . $this->randomOf(static::$namaBelakang) . ' Sejahtera', 'CV ' . $this->randomOf(static::$namaBelakang) . ' Group', 'Pemerintah Kab. Bandung Barat', 'UPT ' . $this->randomOf(['Pendidikan', 'Kesehatan', 'Pertanian']) . ' ' . $this->randomOf(static::$kecamatan)]);
+            return $this->randomOf(['PT '.$this->randomOf(static::$namaBelakang).' Sejahtera', 'CV '.$this->randomOf(static::$namaBelakang).' Group', 'Pemerintah Kab. Bandung Barat', 'UPT '.$this->randomOf(['Pendidikan', 'Kesehatan', 'Pertanian']).' '.$this->randomOf(static::$kecamatan)]);
         }
         if (str_contains($label, 'Bidang') || str_contains($label, 'Unit')) {
             return $this->randomOf(['Bidang Pelayanan', 'Bidang Umum', 'Bidang Keuangan', 'Bidang Infrastruktur', 'Bidang Sosial', 'Subbag Umum', 'Subbag Kepegawaian']);
         }
         if (str_contains($label, 'Kode')) {
-            return 'INV/' . date('Y') . '/' . str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+            return 'INV/'.date('Y').'/'.str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
         }
         if (str_contains($label, 'Tamu')) {
             $depan = $this->randomOf(array_merge(static::$namaDepanLaki, static::$namaDepanPerempuan));
             $belakang = $this->randomOf(static::$namaBelakang);
-            return $depan . ' ' . $belakang;
+
+            return $depan.' '.$belakang;
         }
-        return 'Data ' . $label . ' #' . ($subIndex + 1);
+
+        return 'Data '.$label.' #'.($subIndex + 1);
     }
 
     protected function generateTextareaValue(string $label, int $subIndex, int $totalSubs): string
@@ -498,9 +516,10 @@ class DummyFormSeeder extends Seeder
         if (str_contains($label, 'Alamat')) {
             $noRumah = mt_rand(1, 200);
             $kec = $this->randomOf(static::$kecamatan);
-            $desa = 'Desa ' . $this->randomOf(['Mekarwangi', 'Sukamaju', 'Cijeruk', 'Cimerang', 'Cibodas']);
+            $desa = 'Desa '.$this->randomOf(['Mekarwangi', 'Sukamaju', 'Cijeruk', 'Cimerang', 'Cibodas']);
             $alamat = $this->randomOf(static::$alamat);
-            return "{$alamat} {$noRumah}, RT " . mt_rand(1, 9) . '/RW ' . mt_rand(1, 9) . ", {$desa}, Kec. {$kec}, Kab. Bandung Barat";
+
+            return "{$alamat} {$noRumah}, RT ".mt_rand(1, 9).'/RW '.mt_rand(1, 9).", {$desa}, Kec. {$kec}, Kab. Bandung Barat";
         }
         if (str_contains($label, 'Pengaduan') || str_contains($label, 'Isi')) {
             return static::$isiPengaduan[$subIndex % count(static::$isiPengaduan)];
@@ -509,12 +528,12 @@ class DummyFormSeeder extends Seeder
             return static::$saranSurvey[$subIndex % count(static::$saranSurvey)];
         }
         if (str_contains($label, 'Deskripsi') || str_contains($label, 'uraian')) {
-            return 'Kegiatan ' . $this->randomOf(['berjalan lancar', 'terlaksana dengan baik', 'sesuai rencana', 'diikuti oleh peserta yang antusias', 'memerlukan perbaikan']) . '. ' .
-                $this->randomOf(['Dihadiri oleh ' . mt_rand(10, 50) . ' orang peserta.', 'Bertempat di Aula Kecamatan.', 'Dilaksanakan sesuai jadwal yang ditentukan.']);
+            return 'Kegiatan '.$this->randomOf(['berjalan lancar', 'terlaksana dengan baik', 'sesuai rencana', 'diikuti oleh peserta yang antusias', 'memerlukan perbaikan']).'. '.
+                $this->randomOf(['Dihadiri oleh '.mt_rand(10, 50).' orang peserta.', 'Bertempat di Aula Kecamatan.', 'Dilaksanakan sesuai jadwal yang ditentukan.']);
         }
         if (str_contains($label, 'Tindak Lanjut')) {
             return $this->randomOf([
-                'Akan dilakukan monitoring lanjutan ' . mt_rand(1, 4) . ' minggu lagi.',
+                'Akan dilakukan monitoring lanjutan '.mt_rand(1, 4).' minggu lagi.',
                 'Hasil kegiatan akan dilaporkan ke pimpinan.',
                 'Perlu koordinasi lanjut dengan dinas terkait.',
                 'Dokumentasi kegiatan akan dikirim ke bagian humas.',
@@ -522,14 +541,15 @@ class DummyFormSeeder extends Seeder
         }
         if (str_contains($label, 'Keperluan') || str_contains($label, 'Maksud') || str_contains($label, 'Tujuan')) {
             return $this->randomOf([
-                'Koordinasi program kerja ' . $this->randomOf(static::$kecamatan),
+                'Koordinasi program kerja '.$this->randomOf(static::$kecamatan),
                 'Konsultasi mengenai pelayanan publik',
                 'Pengajuan surat keterangan domisili',
-                'Pembahasan anggaran kegiatan ' . $this->randomOf(['wisuda', 'pelatihan', 'sosialisasi']),
+                'Pembahasan anggaran kegiatan '.$this->randomOf(['wisuda', 'pelatihan', 'sosialisasi']),
                 'Silaturahmi dan koordinasi lintas sektor',
             ]);
         }
-        return 'Isian ' . $label . ' untuk entri ke-' . ($subIndex + 1);
+
+        return 'Isian '.$label.' untuk entri ke-'.($subIndex + 1);
     }
 
     protected function generateNumberValue(string $label, FormField $field): string
@@ -539,6 +559,7 @@ class DummyFormSeeder extends Seeder
         }
         if (str_contains($label, 'Nilai') && str_contains($label, '1-10')) {
             $weights = [1, 2, 3, 10, 15, 14, 12, 8, 5, 2];
+
             return (string) $this->weightedRandom([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], $weights);
         }
         if (str_contains($label, 'Jumlah') || str_contains($label, 'Qty') || str_contains($label, 'Peserta')) {
@@ -546,19 +567,22 @@ class DummyFormSeeder extends Seeder
         }
         if (str_contains($label, 'Nilai Perolehan') || str_contains($label, 'Rupiah') || str_contains($label, 'Penghasilan')) {
             $amounts = [500000, 1000000, 1500000, 2500000, 3500000, 5000000];
+
             return (string) $this->randomOf($amounts);
         }
         if (str_contains($label, 'Estimasi')) {
             return (string) mt_rand(10, 500);
         }
+
         return (string) mt_rand(1, 999);
     }
 
     protected function generateEmailValue(string $label, int $subIndex): string
     {
         $domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'proton.me', 'dinas.kbb.go.id', 'smk-kbb.sch.id'];
-        $name = strtolower(str_replace(' ', '', $this->randomOf(static::$namaDepanLaki))) . $subIndex;
-        return $name . '@' . $this->randomOf($domains);
+        $name = strtolower(str_replace(' ', '', $this->randomOf(static::$namaDepanLaki))).$subIndex;
+
+        return $name.'@'.$this->randomOf($domains);
     }
 
     protected function generateDateValue(string $label, int $subIndex): string
@@ -567,29 +591,36 @@ class DummyFormSeeder extends Seeder
             $year = mt_rand(1960, 2005);
             $month = mt_rand(1, 12);
             $day = mt_rand(1, 28);
+
             return sprintf('%04d-%02d-%02d', $year, $month, $day);
         }
         if (str_contains($label, 'Kejadian')) {
             $daysAgo = mt_rand(1, 60);
+
             return now()->subDays($daysAgo)->format('Y-m-d');
         }
         if (str_contains($label, 'Pengadaan') || str_contains($label, 'Pinjam')) {
             $yearsAgo = mt_rand(0, 5);
+
             return now()->subYears($yearsAgo)->subDays(mt_rand(1, 365))->format('Y-m-d');
         }
         if (str_contains($label, 'Survey') || str_contains($label, 'Kunjungan') || str_contains($label, 'Pendataan')) {
             $daysAgo = mt_rand(0, 30);
+
             return now()->subDays($daysAgo)->format('Y-m-d');
         }
         if (str_contains($label, 'Pelaksanaan') || str_contains($label, 'Mulai')) {
             $daysAgo = mt_rand(1, 45);
+
             return now()->subDays($daysAgo)->format('Y-m-d');
         }
         if (str_contains($label, 'Selesai') || str_contains($label, 'Kembali')) {
             $daysAgo = mt_rand(0, 30);
+
             return now()->addDays(mt_rand(1, 14))->format('Y-m-d');
         }
         $daysAgo = mt_rand(0, 30);
+
         return now()->subDays($daysAgo)->format('Y-m-d');
     }
 

@@ -9,7 +9,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FormCrudController extends Controller
 {
@@ -266,7 +265,7 @@ class FormCrudController extends Controller
     {
         $this->authorize('view', $form);
 
-        if ($form->data_classification && !$form->data_classification->canExport()) {
+        if ($form->data_classification && ! $form->data_classification->canExport()) {
             return response()->json([
                 'success' => false,
                 'data' => null,
@@ -304,7 +303,7 @@ class FormCrudController extends Controller
     {
         $this->authorize('view', $form);
 
-        if ($form->data_classification && !$form->data_classification->canExport()) {
+        if ($form->data_classification && ! $form->data_classification->canExport()) {
             return response()->json([
                 'success' => false,
                 'data' => null,

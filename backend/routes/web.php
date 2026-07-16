@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\WebAuthController;
+use App\Models\SubmissionData;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -32,10 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/change-password', [WebAuthController::class, 'changePassword']);
 
     Route::prefix('notifications')->name('notifications.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
-        Route::get('/unread', [\App\Http\Controllers\NotificationController::class, 'unread'])->name('unread');
-        Route::post('/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('read');
-        Route::post('/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('markAllRead');
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/unread', [NotificationController::class, 'unread'])->name('unread');
+        Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('read');
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('markAllRead');
     });
 });
 
@@ -44,19 +47,19 @@ Route::get('/form/{slug}', [PageController::class, 'publicForm'])->name('public-
 Route::get('/uploads/{path}', function (string $path) {
     abort_unless(Auth::check(), 401);
 
-    $valueInDb = 'uploads/' . $path;
-    $submissionData = \App\Models\SubmissionData::where('value', $valueInDb)->first();
-    abort_if(!$submissionData, 404);
+    $valueInDb = 'uploads/'.$path;
+    $submissionData = SubmissionData::where('value', $valueInDb)->first();
+    abort_if(! $submissionData, 404);
 
-    $fullPath = storage_path('app/private/' . $valueInDb);
-    abort_if(!file_exists($fullPath), 404);
+    $fullPath = storage_path('app/private/'.$valueInDb);
+    abort_if(! file_exists($fullPath), 404);
 
     $form = $submissionData->submission->form;
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = Auth::user();
-    abort_if(Auth::id() !== $form->user_id && !$user->isSuperAdmin(), 403);
+    abort_if(Auth::id() !== $form->user_id && ! $user->isSuperAdmin(), 403);
 
     return response()->file($fullPath);
 })->where('path', '.*')->name('uploads.show');
 
-Route::get('/', fn() => redirect('/login'));
+Route::get('/', fn () => redirect('/login'));

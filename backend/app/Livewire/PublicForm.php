@@ -2,13 +2,16 @@
 
 namespace App\Livewire;
 
+use App\Enums\FieldType;
 use App\Models\Form;
+use App\Models\FormField;
 use App\Models\FormSubmission;
 use App\Models\Participant;
 use App\Models\SubmissionData;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 class PublicForm extends Component
@@ -16,18 +19,27 @@ class PublicForm extends Component
     use WithFileUploads;
 
     public string $slug;
+
     public ?Form $form = null;
+
     public array $responses = [];
+
     public bool $submitted = false;
+
     public string $error = '';
 
     public int $currentStep = 1;
+
     public array $steps = [];
+
     public int $totalSteps = 1;
 
     public string $participantSearch = '';
+
     public array $participantResults = [];
+
     public ?int $selectedParticipantId = null;
+
     public bool $showParticipantSearch = false;
 
     public function mount(string $slug): void
@@ -38,18 +50,21 @@ class PublicForm extends Component
             ->where('status', 'published')
             ->first();
 
-        if (!$form) {
+        if (! $form) {
             $this->error = 'Form tidak ditemukan atau tidak tersedia.';
+
             return;
         }
 
         if ($form->isExpired()) {
             $this->error = 'Form ini sudah tidak menerima jawaban.';
+
             return;
         }
 
         if ($form->isFull()) {
             $this->error = 'Form ini sudah mencapai batas maksimum jawaban.';
+
             return;
         }
 
@@ -67,7 +82,9 @@ class PublicForm extends Component
             $this->steps = [];
             foreach ($sections as $section) {
                 $visibleFields = $form->fields->where('section_id', $section->id)->reject->is_admin_only;
-                if ($visibleFields->isEmpty()) continue;
+                if ($visibleFields->isEmpty()) {
+                    continue;
+                }
                 $this->steps[] = [
                     'title' => $section->title,
                     'fields' => $visibleFields,
@@ -92,6 +109,7 @@ class PublicForm extends Component
     {
         if (strlen($this->participantSearch) < 2) {
             $this->participantResults = [];
+
             return;
         }
 
@@ -104,7 +122,9 @@ class PublicForm extends Component
     public function selectParticipant(int $participantId): void
     {
         $participant = Participant::find($participantId);
-        if (!$participant) return;
+        if (! $participant) {
+            return;
+        }
 
         $this->selectedParticipantId = $participantId;
 
@@ -137,7 +157,7 @@ class PublicForm extends Component
             $label = strtolower($field->label);
 
             if ($presensiData) {
-                if (str_contains($label, 'nama') && !str_contains($label, 'nik')) {
+                if (str_contains($label, 'nama') && ! str_contains($label, 'nik')) {
                     $this->responses[$field->id] = $presensiData['nama lengkap'] ?? $participant->nama;
                 }
                 if (str_contains($label, 'instansi') || str_contains($label, 'opd')) {
@@ -150,7 +170,7 @@ class PublicForm extends Component
                     $this->responses[$field->id] = $presensiData['no. induk pegawai (nip)'] ?? '';
                 }
             } else {
-                if (str_contains($label, 'nama') && !str_contains($label, 'nik')) {
+                if (str_contains($label, 'nama') && ! str_contains($label, 'nik')) {
                     $this->responses[$field->id] = $participant->nama;
                 }
                 if (str_contains($label, 'instansi') || str_contains($label, 'opd')) {
@@ -176,16 +196,22 @@ class PublicForm extends Component
 
     private function calculateComputedFields(): void
     {
-        if (!$this->form) return;
+        if (! $this->form) {
+            return;
+        }
 
         foreach ($this->form->fields as $field) {
-            if ($field->type->value !== 'computed' || empty($field->formula)) continue;
+            if ($field->type->value !== 'computed' || empty($field->formula)) {
+                continue;
+            }
 
             $refFieldId = $field->formula['ref_field_id'] ?? null;
             $operation = $field->formula['operation'] ?? 'multiply';
             $constantValue = $field->formula['value'] ?? null;
 
-            if (!$refFieldId) continue;
+            if (! $refFieldId) {
+                continue;
+            }
 
             $refValue = (float) ($this->responses[(string) $refFieldId] ?? 0);
 
@@ -226,13 +252,17 @@ class PublicForm extends Component
     private function validateStep(int $stepIndex): void
     {
         $step = $this->steps[$stepIndex - 1] ?? null;
-        if (!$step) return;
+        if (! $step) {
+            return;
+        }
 
         $rules = [];
         $messages = [];
 
         foreach ($step['fields'] as $field) {
-            if ($field->type->value === 'computed' || $field->is_admin_only) continue;
+            if ($field->type->value === 'computed' || $field->is_admin_only) {
+                continue;
+            }
 
             $key = "responses.{$field->id}";
             $fieldRules = [];
@@ -255,11 +285,15 @@ class PublicForm extends Component
                     'number' => 'numeric',
                     default => 'string',
                 };
-                if ($field->min_length) $fieldRules[] = "min:{$field->min_length}";
-                if ($field->max_length) $fieldRules[] = "max:{$field->max_length}";
+                if ($field->min_length) {
+                    $fieldRules[] = "min:{$field->min_length}";
+                }
+                if ($field->max_length) {
+                    $fieldRules[] = "max:{$field->max_length}";
+                }
             }
 
-            if (!empty($fieldRules)) {
+            if (! empty($fieldRules)) {
                 $rules[$key] = implode('|', $fieldRules);
             }
 
@@ -273,14 +307,16 @@ class PublicForm extends Component
             }
         }
 
-        if (!empty($rules)) {
+        if (! empty($rules)) {
             $this->validate($rules, $messages);
         }
     }
 
     public function submitForm(): void
     {
-        if (!$this->form) return;
+        if (! $this->form) {
+            return;
+        }
 
         $this->calculateComputedFields();
 
@@ -288,7 +324,9 @@ class PublicForm extends Component
         $validationMessages = [];
 
         foreach ($this->form->fields as $field) {
-            if ($field->type->value === 'computed' || $field->is_admin_only) continue;
+            if ($field->type->value === 'computed' || $field->is_admin_only) {
+                continue;
+            }
 
             $key = "responses.{$field->id}";
             $rules = [];
@@ -311,8 +349,12 @@ class PublicForm extends Component
                     'number' => 'numeric',
                     default => 'string',
                 };
-                if ($field->min_length) $rules[] = "min:{$field->min_length}";
-                if ($field->max_length) $rules[] = "max:{$field->max_length}";
+                if ($field->min_length) {
+                    $rules[] = "min:{$field->min_length}";
+                }
+                if ($field->max_length) {
+                    $rules[] = "max:{$field->max_length}";
+                }
             }
 
             $validationRules[$key] = implode('|', $rules);
@@ -332,7 +374,7 @@ class PublicForm extends Component
         $submission = FormSubmission::create([
             'uuid' => Str::uuid(),
             'form_id' => $this->form->id,
-            'user_id' => auth()->check() ? auth()->id() : null,
+            'user_id' => Auth::check() ? Auth::id() : null,
             'ip_address' => $this->form->collect_ip ? request()->ip() : null,
             'user_agent' => $this->form->collect_ip ? request()->userAgent() : null,
             'submitted_at' => now(),
@@ -341,9 +383,11 @@ class PublicForm extends Component
         foreach ($this->responses as $fieldId => $value) {
             $fieldModel = $this->form->fields->firstWhere('id', $fieldId);
 
-            if ($fieldModel && $fieldModel->is_admin_only) continue;
+            if ($fieldModel && $fieldModel->is_admin_only) {
+                continue;
+            }
 
-            if ($fieldModel && $fieldModel->type->value === 'file' && $value instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+            if ($fieldModel && $fieldModel->type->value === 'file' && $value instanceof TemporaryUploadedFile) {
                 $path = $value->store('uploads', 'local');
                 $value = $path;
             }
@@ -355,6 +399,48 @@ class PublicForm extends Component
             ]);
         }
 
+        $this->autoSetPresensiStatus($submission);
+
         $this->submitted = true;
+    }
+
+    private function isPresensiForm(): bool
+    {
+        return str_contains($this->slug, 'presensi') || str_contains($this->slug, 'transfer-knowledge');
+    }
+
+    private function autoSetPresensiStatus(FormSubmission $submission): void
+    {
+        if (! $this->isPresensiForm()) {
+            return;
+        }
+
+        $statusField = $this->form->fields
+            ->where('label', 'Status Kehadiran')
+            ->first();
+
+        if (! $statusField) {
+            $statusField = FormField::create([
+                'form_id' => $this->form->id,
+                'type' => FieldType::Radio,
+                'label' => 'Status Kehadiran',
+                'options' => ['Hadir', 'Izin', 'Sakit', 'Tanpa Keterangan'],
+                'is_admin_only' => true,
+                'required' => false,
+                'order' => $this->form->fields->max('order') + 1,
+            ]);
+        }
+
+        $existing = SubmissionData::where('submission_id', $submission->id)
+            ->where('form_field_id', $statusField->id)
+            ->first();
+
+        if (! $existing) {
+            SubmissionData::create([
+                'submission_id' => $submission->id,
+                'form_field_id' => $statusField->id,
+                'value' => 'Hadir',
+            ]);
+        }
     }
 }

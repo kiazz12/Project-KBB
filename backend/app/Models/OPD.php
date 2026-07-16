@@ -17,17 +17,11 @@ class OPD extends Model
         'description',
     ];
 
-    /**
-     * Get users in this OPD
-     */
     public function users()
     {
         return $this->hasMany(User::class, 'opd_id');
     }
 
-    /**
-     * Get forms created by this OPD
-     */
     public function forms()
     {
         return $this->hasMany(Form::class, 'opd_id');

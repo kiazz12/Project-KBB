@@ -9,6 +9,7 @@ use App\Models\FormSubmission;
 use App\Models\Participant;
 use App\Models\SubmissionData;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -19,12 +20,13 @@ class KbbPesertaSeeder extends Seeder
     {
         $csvPath = database_path('app/daftar_hadir.csv');
 
-        if (!file_exists($csvPath)) {
+        if (! file_exists($csvPath)) {
             $csvPath = storage_path('app/daftar_hadir.csv');
         }
 
-        if (!file_exists($csvPath)) {
+        if (! file_exists($csvPath)) {
             $this->command->warn('CSV file not found. Skipping participant import.');
+
             return;
         }
 
@@ -32,7 +34,7 @@ class KbbPesertaSeeder extends Seeder
 
         $participants = $this->importCsv($csvPath);
 
-        $this->command->info("  Imported " . count($participants) . " participants.");
+        $this->command->info('  Imported '.count($participants).' participants.');
 
         $this->command->info('--- Creating form "Tanda Terima Uang Saku Peserta"...');
 
@@ -46,7 +48,7 @@ class KbbPesertaSeeder extends Seeder
 
         $this->createSubmissions($form, $fields, $participants);
 
-        $this->command->info('--- Done! Form slug: ' . $form->slug);
+        $this->command->info('--- Done! Form slug: '.$form->slug);
     }
 
     private function importCsv(string $path): array
@@ -56,7 +58,9 @@ class KbbPesertaSeeder extends Seeder
         $header = fgetcsv($handle);
 
         while (($row = fgetcsv($handle)) !== false) {
-            if (count($row) < 4) continue;
+            if (count($row) < 4) {
+                continue;
+            }
 
             $tanggal = $row[5] ?? null;
             if ($tanggal && preg_match('/(\d{2})-(\d{2})-(\d{4})/', $tanggal, $m)) {
@@ -92,7 +96,7 @@ class KbbPesertaSeeder extends Seeder
         $baseSlug = $slug;
         $counter = 1;
         while (Form::where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 
@@ -113,7 +117,7 @@ class KbbPesertaSeeder extends Seeder
         ]);
     }
 
-    private function createFields(Form $form): \Illuminate\Database\Eloquent\Collection
+    private function createFields(Form $form): Collection
     {
         $now = now();
 
@@ -247,7 +251,7 @@ class KbbPesertaSeeder extends Seeder
         return $createdFields;
     }
 
-    private function createSubmissions(Form $form, \Illuminate\Database\Eloquent\Collection $fields, array $participants): void
+    private function createSubmissions(Form $form, Collection $fields, array $participants): void
     {
         $uangSakuField = $fields->firstWhere('label', 'Jumlah Uang Saku');
         $pph21Field = $fields->firstWhere('label', 'PPh 21 (5%)');
@@ -286,7 +290,9 @@ class KbbPesertaSeeder extends Seeder
 
         foreach ($allSubmissions as $i => $submission) {
             $p = $participants[$i] ?? null;
-            if (!$p) continue;
+            if (! $p) {
+                continue;
+            }
 
             $fieldMap = [
                 'Nama Peserta' => $p['nama'],
@@ -298,8 +304,12 @@ class KbbPesertaSeeder extends Seeder
             ];
 
             foreach ($fields as $field) {
-                if ($field->type->value === 'heading') continue;
-                if ($field->type->value === 'signature') continue;
+                if ($field->type->value === 'heading') {
+                    continue;
+                }
+                if ($field->type->value === 'signature') {
+                    continue;
+                }
 
                 $value = $fieldMap[$field->label] ?? '';
                 if ($value !== '') {
@@ -318,6 +328,6 @@ class KbbPesertaSeeder extends Seeder
             SubmissionData::insert($chunk);
         }
 
-        $this->command->info("  Created " . count($allSubmissions) . " submissions with pre-filled data.");
+        $this->command->info('  Created '.count($allSubmissions).' submissions with pre-filled data.');
     }
 }

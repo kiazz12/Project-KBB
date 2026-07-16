@@ -7,11 +7,10 @@ use App\Models\Form;
 use App\Models\FormField;
 use App\Models\FormSection;
 use App\Models\FormSubmission;
-use App\Models\Participant;
 use App\Models\SubmissionData;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class KbbPresensiSeeder extends Seeder
@@ -20,8 +19,9 @@ class KbbPresensiSeeder extends Seeder
     {
         $csvPath = storage_path('app/daftar_hadir.csv');
 
-        if (!file_exists($csvPath)) {
-            $this->command->warn('CSV file not found at: ' . $csvPath);
+        if (! file_exists($csvPath)) {
+            $this->command->warn('CSV file not found at: '.$csvPath);
+
             return;
         }
 
@@ -41,9 +41,9 @@ class KbbPresensiSeeder extends Seeder
 
         $this->importAndCreateSubmissions($form, $fields, $csvPath);
 
-        $this->command->info('--- Done! Form slug: ' . $form->slug);
-        $this->command->info('--- Admin URL: /forms/' . $form->id);
-        $this->command->info('--- Public URL: /form/' . $form->slug);
+        $this->command->info('--- Done! Form slug: '.$form->slug);
+        $this->command->info('--- Admin URL: /forms/'.$form->id);
+        $this->command->info('--- Public URL: /form/'.$form->slug);
     }
 
     private function createForm(): Form
@@ -54,7 +54,7 @@ class KbbPresensiSeeder extends Seeder
         $baseSlug = $slug;
         $counter = 1;
         while (Form::where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 
@@ -75,7 +75,7 @@ class KbbPresensiSeeder extends Seeder
         ]);
     }
 
-    private function createSections(Form $form): \Illuminate\Database\Eloquent\Collection
+    private function createSections(Form $form): Collection
     {
         $now = now();
 
@@ -100,7 +100,7 @@ class KbbPresensiSeeder extends Seeder
         return $form->sections()->orderBy('order')->get();
     }
 
-    private function createFields(Form $form, \Illuminate\Database\Eloquent\Collection $sections): \Illuminate\Database\Eloquent\Collection
+    private function createFields(Form $form, Collection $sections): Collection
     {
         $now = now();
         $infoSection = $sections->firstWhere('title', 'Informasi Kegiatan');
@@ -109,7 +109,6 @@ class KbbPresensiSeeder extends Seeder
         $verifikasiSection = $sections->firstWhere('title', 'Verifikasi & Tanda Tangan');
 
         $fieldDefs = [
-            // Section: Informasi Kegiatan
             [
                 'type' => FieldType::Text->value,
                 'label' => 'Tanggal Pelaksanaan',
@@ -125,7 +124,6 @@ class KbbPresensiSeeder extends Seeder
                 'order' => 2,
             ],
 
-            // Section: Data Peserta
             [
                 'type' => FieldType::Text->value,
                 'label' => 'Role',
@@ -169,7 +167,6 @@ class KbbPresensiSeeder extends Seeder
                 'order' => 7,
             ],
 
-            // Section: Presensi & Keuangan
             [
                 'type' => FieldType::Text->value,
                 'label' => 'Hari ke-',
@@ -203,8 +200,9 @@ class KbbPresensiSeeder extends Seeder
             [
                 'type' => FieldType::Radio->value,
                 'label' => 'Status Kehadiran',
-                'required' => true,
+                'required' => false,
                 'options' => ['Hadir', 'Izin', 'Sakit', 'Tanpa Keterangan'],
+                'is_admin_only' => true,
                 'section_id' => $presensiSection->id,
                 'order' => 12,
             ],
@@ -239,7 +237,6 @@ class KbbPresensiSeeder extends Seeder
                 'order' => 16,
             ],
 
-            // Section: Verifikasi & Tanda Tangan
             [
                 'type' => FieldType::Signature->value,
                 'label' => 'Tanda Tangan Peserta',
@@ -305,14 +302,16 @@ class KbbPresensiSeeder extends Seeder
         return $createdFields;
     }
 
-    private function importAndCreateSubmissions(Form $form, \Illuminate\Database\Eloquent\Collection $fields, string $csvPath): void
+    private function importAndCreateSubmissions(Form $form, Collection $fields, string $csvPath): void
     {
         $participants = [];
         $handle = fopen($csvPath, 'r');
         $header = fgetcsv($handle);
 
         while (($row = fgetcsv($handle)) !== false) {
-            if (count($row) < 4) continue;
+            if (count($row) < 4) {
+                continue;
+            }
 
             $tanggal = $row[5] ?? null;
             if ($tanggal && preg_match('/(\d{2})-(\d{2})-(\d{4})/', $tanggal, $m)) {
@@ -370,7 +369,9 @@ class KbbPresensiSeeder extends Seeder
 
         foreach ($allSubmissions as $i => $submission) {
             $p = $participants[$i] ?? null;
-            if (!$p) continue;
+            if (! $p) {
+                continue;
+            }
 
             $fieldMap = [
                 'Role' => $p['role'] ?: 'Peserta',
@@ -391,10 +392,18 @@ class KbbPresensiSeeder extends Seeder
             ];
 
             foreach ($fields as $field) {
-                if ($field->type->value === 'heading') continue;
-                if ($field->type->value === 'paragraph') continue;
-                if ($field->type->value === 'signature') continue;
-                if ($field->type->value === 'computed') continue;
+                if ($field->type->value === 'heading') {
+                    continue;
+                }
+                if ($field->type->value === 'paragraph') {
+                    continue;
+                }
+                if ($field->type->value === 'signature') {
+                    continue;
+                }
+                if ($field->type->value === 'computed') {
+                    continue;
+                }
 
                 $value = $fieldMap[$field->label] ?? '';
                 if ($value !== '') {
@@ -413,6 +422,6 @@ class KbbPresensiSeeder extends Seeder
             SubmissionData::insert($chunk);
         }
 
-        $this->command->info("  Created " . count($allSubmissions) . " submissions with pre-filled data.");
+        $this->command->info('  Created '.count($allSubmissions).' submissions with pre-filled data.');
     }
 }

@@ -22,13 +22,16 @@ class WebAuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
             $request->session()->regenerate();
+            $request->session()->put('last_activity_at', now()->timestamp);
 
-            if (!SessionLimitService::canLogin($user)) {
+            if (! SessionLimitService::canLogin($user)) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
+                /** @var User $user */
                 $max = $user->isSuperAdmin() ? 1 : 3;
+
                 return back()->with('login_limit_error', "Anda telah mencapai batas maksimal {$max} session login. Silakan logout dari perangkat lain terlebih dahulu.");
             }
 
@@ -55,7 +58,7 @@ class WebAuthController extends Controller
 
         $user = $request->user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Password saat ini tidak sesuai.']);
         }
 
@@ -63,13 +66,12 @@ class WebAuthController extends Controller
 
         AuditService::log('password.changed', $user, "User '{$user->name}' changed password");
 
-        User::where('role', 'super_admin')->get()->each(fn($sa) =>
-            Notification::create([
-                'user_id' => $sa->id,
-                'type' => 'password_changed',
-                'message' => "Admin {$user->name} ({$user->email}) mengubah password akun mereka.",
-                'data' => ['admin_id' => $user->id, 'admin_name' => $user->name, 'admin_email' => $user->email],
-            ])
+        User::where('role', 'super_admin')->get()->each(fn ($sa) => Notification::create([
+            'user_id' => $sa->id,
+            'type' => 'password_changed',
+            'message' => "Admin {$user->name} ({$user->email}) mengubah password akun mereka.",
+            'data' => ['admin_id' => $user->id, 'admin_name' => $user->name, 'admin_email' => $user->email],
+        ])
         );
 
         return back()->with('success', 'Password berhasil diubah.');

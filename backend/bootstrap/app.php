@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\TrackSessionActivity;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -23,12 +24,16 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(prepend: [
+            TrackSessionActivity::class,
+        ]);
+
         $middleware->api(prepend: [
             ForceJsonResponse::class,
             HandleCors::class,
         ]);
 
-        $middleware->validateCsrfTokens(except: []);
+        $middleware->preventRequestForgery(except: []);
 
         $middleware->alias([
             'role' => RoleMiddleware::class,

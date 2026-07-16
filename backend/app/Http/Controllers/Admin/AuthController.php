@@ -30,8 +30,9 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
+            $request->session()->put('last_activity_at', now()->timestamp);
 
-            if (!SessionLimitService::canLogin($user)) {
+            if (! SessionLimitService::canLogin($user)) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

@@ -4,30 +4,25 @@ namespace App\Domains\InternalForms\Services;
 
 use App\Models\Form;
 use App\Models\FormField;
+use App\Models\SubmissionData;
 use App\Models\User;
 use Illuminate\Support\Str;
 
 class FormManagementService
 {
-    /**
-     * Create new form
-     */
     public function createForm(User $user, array $data): Form
     {
         $form = Form::create([
             'user_id' => $user->id,
             'title' => $data['title'],
             'description' => $data['description'] ?? '',
-            'slug' => Str::slug($data['title']) . '-' . Str::random(6),
+            'slug' => Str::slug($data['title']).'-'.Str::random(6),
             'status' => 'draft',
         ]);
 
         return $form;
     }
 
-    /**
-     * Update form
-     */
     public function updateForm(Form $form, array $data): Form
     {
         $form->update([
@@ -38,9 +33,6 @@ class FormManagementService
         return $form;
     }
 
-    /**
-     * Publish form
-     */
     public function publishForm(Form $form): Form
     {
         if ($form->fields()->count() === 0) {
@@ -48,30 +40,25 @@ class FormManagementService
         }
 
         $form->update(['status' => 'published']);
+
         return $form;
     }
 
-    /**
-     * Close form
-     */
     public function closeForm(Form $form): Form
     {
         $form->update(['status' => 'closed']);
+
         return $form;
     }
 
-    /**
-     * Duplicate form
-     */
     public function duplicateForm(Form $form, User $user): Form
     {
         $newForm = $form->replicate([]);
         $newForm->user_id = $user->id;
-        $newForm->slug = Str::slug($form->title) . '-copy-' . Str::random(6);
+        $newForm->slug = Str::slug($form->title).'-copy-'.Str::random(6);
         $newForm->status = 'draft';
         $newForm->save();
 
-        // Duplicate fields
         $form->fields->each(function ($field) use ($newForm) {
             $newField = $field->replicate([]);
             $newField->form_id = $newForm->id;
@@ -81,26 +68,18 @@ class FormManagementService
         return $newForm;
     }
 
-    /**
-     * Delete form with all related data
-     */
     public function deleteForm(Form $form): bool
     {
-        // Delete all submissions first
         $form->submissions()->forceDelete();
-        // Delete all fields
         $form->fields()->delete();
-        // Delete form
+
         return $form->delete();
     }
 
-    /**
-     * Add field to form
-     */
     public function addField(Form $form, array $data): FormField
     {
         $maxOrder = $form->fields()->max('order') ?? 0;
-        
+
         return FormField::create([
             'form_id' => $form->id,
             'label' => $data['label'],
@@ -111,9 +90,6 @@ class FormManagementService
         ]);
     }
 
-    /**
-     * Update field
-     */
     public function updateField(FormField $field, array $data): FormField
     {
         $field->update([
@@ -126,19 +102,13 @@ class FormManagementService
         return $field;
     }
 
-    /**
-     * Delete field
-     */
     public function deleteField(FormField $field): bool
     {
-        // Delete submission data related to this field
-        \App\Models\SubmissionData::where('form_field_id', $field->id)->delete();
+        SubmissionData::where('form_field_id', $field->id)->delete();
+
         return $field->delete();
     }
 
-    /**
-     * Reorder fields
-     */
     public function reorderFields(Form $form, array $fieldIds): void
     {
         foreach ($fieldIds as $index => $fieldId) {

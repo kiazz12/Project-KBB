@@ -9,9 +9,6 @@ use Illuminate\Support\Collection;
 
 class ReportingService
 {
-    /**
-     * Get dashboard statistics
-     */
     public function getDashboardStats(User $user): array
     {
         if ($user->role === 'super_admin') {
@@ -20,7 +17,7 @@ class ReportingService
             $usersCount = User::count();
         } else {
             $formsCount = Form::where('user_id', $user->id)->count();
-            $submissionsCount = FormSubmission::whereHas('form', fn($q) => $q->where('user_id', $user->id))->count();
+            $submissionsCount = FormSubmission::whereHas('form', fn ($q) => $q->where('user_id', $user->id))->count();
             $usersCount = 1;
         }
 
@@ -32,9 +29,6 @@ class ReportingService
         ];
     }
 
-    /**
-     * Get recent forms
-     */
     public function getRecentForms(User $user, int $limit = 5): Collection
     {
         $query = Form::query();
@@ -48,13 +42,10 @@ class ReportingService
             ->get();
     }
 
-    /**
-     * Get form analytics
-     */
     public function getFormAnalytics(Form $form): array
     {
         $submissions = $form->submissions;
-        
+
         return [
             'form_id' => $form->id,
             'form_title' => $form->title,
@@ -64,13 +55,10 @@ class ReportingService
         ];
     }
 
-    /**
-     * Calculate submission rate
-     */
     protected function calculateSubmissionRate(Form $form): string
     {
         $publishedAt = $form->published_at;
-        if (!$publishedAt) {
+        if (! $publishedAt) {
             return '0%';
         }
 
@@ -80,27 +68,23 @@ class ReportingService
         }
 
         $rate = ($form->submissions->count() / $days) * 100;
-        return round($rate, 2) . '%';
+
+        return round($rate, 2).'%';
     }
 
-    /**
-     * Export form data to CSV
-     */
     public function exportToCsv(Form $form): string
     {
         $submissions = $form->submissions()->with('data')->get();
         $fields = $form->fields;
 
         $csv = [];
-        
-        // Header
+
         $header = ['Submission ID', 'Submitted At'];
         foreach ($fields as $field) {
             $header[] = $field->label;
         }
         $csv[] = implode(',', $header);
 
-        // Data rows
         foreach ($submissions as $submission) {
             $row = [
                 $submission->id,
@@ -109,7 +93,7 @@ class ReportingService
 
             foreach ($fields as $field) {
                 $data = $submission->data()->where('form_field_id', $field->id)->first();
-                $row[] = $data ? '"' . str_replace('"', '""', $data->value) . '"' : '';
+                $row[] = $data ? '"'.str_replace('"', '""', $data->value).'"' : '';
             }
 
             $csv[] = implode(',', $row);

@@ -25,8 +25,8 @@ class UserObserver
             }
         }
 
-        if (!empty($changes)) {
-            $this->notifySuperAdmins("User '{$user->name}' telah diperbarui (" . implode(', ', $changes) . ').');
+        if (! empty($changes)) {
+            $this->notifySuperAdmins("User '{$user->name}' telah diperbarui (".implode(', ', $changes).').');
         }
     }
 

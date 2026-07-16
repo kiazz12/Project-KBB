@@ -1,4 +1,12 @@
-<div>
+<div wire:poll.30s="autoSaveSettings">
+    <div class="flex items-center justify-end mb-2" x-data="{ show: false }" x-init="
+        $wire.on('autosaved', () => { show = true; setTimeout(() => show = false, 2000); });
+    ">
+        <span x-show="show" style="display: none;" class="text-xs text-emerald-600 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Tersimpan otomatis
+        </span>
+    </div>
     @if ($message)
         <div class="mb-6 px-4 py-3 rounded-lg text-sm {{ $messageType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200' }}">
             {{ $message }}

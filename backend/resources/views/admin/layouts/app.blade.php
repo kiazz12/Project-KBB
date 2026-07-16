@@ -54,7 +54,8 @@
 <body class="bg-gray-50 text-gray-900 antialiased">
     @if (auth()->check())
     <div class="flex h-screen overflow-hidden">
-        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+        <div id="admin-sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="closeAdminSidebar()"></div>
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 transition-all duration-300 fixed lg:static inset-y-0 left-0 z-50 -ml-64 lg:ml-0">
             <div class="h-16 flex items-center gap-3 px-5 border-b border-gray-100">
                 <img src="{{ asset('images/kbb-logo.png') }}" alt="KBB" class="w-8 h-8">
                 <div>
@@ -100,14 +101,17 @@
             </div>
         </aside>
 
-        <main class="flex-1 overflow-y-auto bg-gray-50">
-            <div class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-gray-200 px-6 py-3 flex items-center gap-4">
-                <h1 class="text-lg font-semibold text-gray-900 flex-1">@yield('title', 'Admin Panel')</h1>
+        <main class="flex-1 overflow-y-auto bg-gray-50 min-w-0">
+            <div class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-4">
+                <button onclick="toggleAdminSidebar()" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                <h1 class="text-lg font-semibold text-gray-900 flex-1 min-w-0 truncate">@yield('title', 'Admin Panel')</h1>
                 @auth
                     @livewire('notification-bell')
                 @endauth
             </div>
-            <div class="max-w-7xl mx-auto px-6 py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
                 @if (session('success'))
                     <div class="mb-6 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm flex items-center gap-2">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -124,6 +128,31 @@
             </div>
         </main>
     </div>
+
+    <script>
+        function toggleAdminSidebar() {
+            const sidebar = document.getElementById('admin-sidebar');
+            const overlay = document.getElementById('admin-sidebar-overlay');
+            const isOpen = !sidebar.classList.contains('-ml-64');
+            if (isOpen) {
+                sidebar.classList.add('-ml-64');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('-ml-64');
+                overlay.classList.remove('hidden');
+            }
+        }
+        function closeAdminSidebar() {
+            document.getElementById('admin-sidebar').classList.add('-ml-64');
+            document.getElementById('admin-sidebar-overlay').classList.add('hidden');
+        }
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) {
+                document.getElementById('admin-sidebar').classList.remove('-ml-64');
+                document.getElementById('admin-sidebar-overlay').classList.add('hidden');
+            }
+        });
+    </script>
     @else
         <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-kbb-800 via-[#001a3a] to-kbb-950 overflow-hidden relative">
             <div class="absolute inset-0 bg-grid"></div>

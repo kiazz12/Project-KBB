@@ -56,6 +56,10 @@
             <h3 class="text-sm font-semibold text-gray-900 mb-3">Aksi</h3>
             <div class="space-y-2">
                 <a href="{{ route('forms.edit', $form) }}" class="block w-full text-center bg-kbb-700 hover:bg-kbb-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition">Edit Form</a>
+                <form method="POST" action="{{ route('forms.duplicate', $form) }}" onsubmit="return confirm('Gandakan form ini sebagai draft?')">
+                    @csrf
+                    <button type="submit" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition">Gandakan Form</button>
+                </form>
                 <a href="{{ route('forms.submissions.index', $form) }}" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition">Lihat Data</a>
                 <a href="{{ route('forms.analytics', $form) }}" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition">Analytics</a>
                 <hr class="border-gray-200">

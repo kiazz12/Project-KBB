@@ -29,6 +29,10 @@
             {{-- Form Body --}}
             <div class="px-8 py-5">
                 <form wire:submit="submitForm">
+                    <div aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;">
+                        <label>Website</label>
+                        <input type="text" tabindex="-1" autocomplete="off" wire:model="company_website">
+                    </div>
                     @php $step = $steps[$currentStep - 1] ?? null; @endphp
                     @if ($step)
                         <div class="space-y-5">
@@ -144,12 +148,20 @@
                                                 if (!canvas) return;
                                                 var ctx = canvas.getContext('2d');
                                                 var drawing = false;
-                                                canvas.width = canvas.offsetWidth;
-                                                canvas.height = canvas.offsetHeight;
-                                                ctx.strokeStyle = '#1f2937';
-                                                ctx.lineWidth = 2.5;
-                                                ctx.lineCap = 'round';
-                                                ctx.lineJoin = 'round';
+                                                var imageData = null;
+
+                                                function resizeCanvas() {
+                                                    imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                                    canvas.width = canvas.offsetWidth;
+                                                    canvas.height = canvas.offsetHeight;
+                                                    ctx.putImageData(imageData, 0, 0);
+                                                    ctx.strokeStyle = '#1f2937';
+                                                    ctx.lineWidth = 2.5;
+                                                    ctx.lineCap = 'round';
+                                                    ctx.lineJoin = 'round';
+                                                }
+                                                resizeCanvas();
+                                                window.addEventListener('resize', resizeCanvas);
                                                 canvas.addEventListener('mousedown', function() { drawing = true; });
                                                 canvas.addEventListener('mouseup', function() { drawing = false; ctx.beginPath(); saveSig(fid); });
                                                 canvas.addEventListener('mouseleave', function() { if (drawing) { drawing = false; ctx.beginPath(); saveSig(fid); } });

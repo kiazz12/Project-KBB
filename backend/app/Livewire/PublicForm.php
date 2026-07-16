@@ -42,6 +42,8 @@ class PublicForm extends Component
 
     public bool $showParticipantSearch = false;
 
+    public string $company_website = '';
+
     public function mount(string $slug): void
     {
         $this->slug = $slug;
@@ -315,6 +317,12 @@ class PublicForm extends Component
     public function submitForm(): void
     {
         if (! $this->form) {
+            return;
+        }
+
+        if (! empty($this->company_website)) {
+            $this->error = 'Pengiriman ditolak.';
+
             return;
         }
 

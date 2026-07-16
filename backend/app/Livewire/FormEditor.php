@@ -122,7 +122,34 @@ class FormEditor extends Component
 
     public function selectTab(string $tab): void
     {
+        $this->autoSaveSettings();
         $this->tab = $tab;
+    }
+
+    public function autoSaveSettings(): void
+    {
+        if (! $this->form->exists) {
+            return;
+        }
+
+        $this->authorize('update', $this->form);
+
+        $this->form->update([
+            'title' => $this->settingsTitle ?: $this->form->title,
+            'description' => $this->settingsDescription,
+            'starts_at' => $this->settingsStartsAt ?: null,
+            'ends_at' => $this->settingsEndsAt ?: null,
+            'max_submissions' => $this->settingsMaxSubmissions ?: null,
+            'require_auth' => $this->settingsRequireAuth,
+            'collect_ip' => $this->settingsCollectIp,
+            'show_kbb_logo' => $this->settingsShowKbbLogo,
+            'limit_one_response' => $this->settingsLimitOneResponse,
+            'confirmation_type' => $this->settingsConfirmationType,
+            'confirmation_message' => $this->settingsConfirmationMessage,
+            'redirect_url' => $this->settingsRedirectUrl ?: null,
+        ]);
+
+        $this->dispatch('autosaved');
     }
 
     public function editField(int $fieldId): void

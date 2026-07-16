@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SubmissionsExport;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\SubmissionData;
@@ -10,6 +11,7 @@ use App\Services\AuditService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class PageController extends Controller
 {
@@ -145,6 +147,28 @@ class PageController extends Controller
         return view('forms.edit', compact('form'));
     }
 
+    public function duplicateForm(int $id)
+    {
+        $form = Form::with('fields')->findOrFail($id);
+        $this->authorize('view', $form);
+
+        $newForm = $form->replicate(['uuid', 'slug', 'created_at', 'updated_at']);
+        $newForm->uuid = (string) Str::uuid();
+        $newForm->slug = Str::slug($form->title).'-'.Str::random(6);
+        $newForm->title = $form->title.' (Copy)';
+        $newForm->status = 'draft';
+        $newForm->save();
+
+        foreach ($form->fields as $field) {
+            $newField = $field->replicate(['form_id', 'created_at', 'updated_at']);
+            $newField->form_id = $newForm->id;
+            $newField->save();
+        }
+
+        return redirect()->route('forms.edit', $newForm)
+            ->with('success', 'Form berhasil digandakan sebagai draft.');
+    }
+
     public function formsAnalytics(int $id)
     {
         $form = Form::with('fields')->findOrFail($id);
@@ -196,9 +220,41 @@ class PageController extends Controller
             $query->whereIn('id', $submissionIds);
         }
 
+        if ($from = request('from')) {
+            $query->whereDate('submitted_at', '>=', $from);
+        }
+
+        if ($to = request('to')) {
+            $query->whereDate('submitted_at', '<=', $to);
+        }
+
         $submissions = $query->latest('submitted_at')->paginate(20);
 
         return view('forms.submissions.index', compact('form', 'submissions'));
+    }
+
+    public function bulkDeleteSubmissions(Request $request, int $id)
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('view', $form);
+
+        $ids = (array) $request->input('ids', []);
+        if (empty($ids)) {
+            return redirect()->route('forms.submissions.index', $form)->with('error', 'Pilih minimal satu submission.');
+        }
+
+        $submissions = $form->submissions()->whereIn('id', $ids)->get();
+        foreach ($submissions as $submission) {
+            $submission->data()->delete();
+            $submission->delete();
+        }
+
+        AuditService::log('submissions_bulk_deleted', [
+            'form_id' => $form->id,
+            'count' => $submissions->count(),
+        ]);
+
+        return redirect()->route('forms.submissions.index', $form)->with('success', $submissions->count().' submission berhasil dihapus.');
     }
 
     public function deleteSubmission(Request $request, int $formId, int $id)
@@ -281,6 +337,18 @@ class PageController extends Controller
         return response()->streamDownload($callback, "{$form->slug}-submissions.csv", [
             'Content-Type' => 'text/csv',
         ]);
+    }
+
+    public function exportXlsx(Request $request, int $id): mixed
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('view', $form);
+
+        if ($form->data_classification && ! $form->data_classification->canExport()) {
+            return redirect()->back()->with('error', 'Form dengan klasifikasi ini tidak dapat diexport.');
+        }
+
+        return (new SubmissionsExport($form))->download("{$form->slug}-submissions.xlsx");
     }
 
     public function exportPdf(Request $request, int $id): mixed

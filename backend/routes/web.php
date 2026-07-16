@@ -21,11 +21,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/forms/create', [PageController::class, 'formsCreate'])->name('forms.create');
     Route::get('/forms/{form}', [PageController::class, 'formsShow'])->name('forms.show')->whereNumber('form');
     Route::get('/forms/{form}/edit', [PageController::class, 'formsEdit'])->name('forms.edit')->whereNumber('form');
+    Route::post('/forms/{form}/duplicate', [PageController::class, 'duplicateForm'])->name('forms.duplicate')->whereNumber('form');
     Route::get('/forms/{form}/analytics', [PageController::class, 'formsAnalytics'])->name('forms.analytics')->whereNumber('form');
     Route::get('/forms/{form}/submissions', [PageController::class, 'submissionsIndex'])->name('forms.submissions.index')->whereNumber('form');
     Route::get('/forms/{form}/submissions/{submission}', [PageController::class, 'submissionsShow'])->name('forms.submissions.show')->whereNumber('form')->whereNumber('submission');
     Route::post('/forms/{form}/submissions/{submission}/delete', [PageController::class, 'deleteSubmission'])->name('forms.submissions.delete')->whereNumber('form')->whereNumber('submission');
+    Route::post('/forms/{form}/submissions/bulk-delete', [PageController::class, 'bulkDeleteSubmissions'])->name('forms.submissions.bulk-delete')->whereNumber('form');
     Route::get('/forms/{form}/export/csv', [PageController::class, 'exportCsv'])->name('forms.export.csv')->whereNumber('form');
+    Route::get('/forms/{form}/export/xlsx', [PageController::class, 'exportXlsx'])->name('forms.export.xlsx')->whereNumber('form');
     Route::get('/forms/{form}/export/pdf', [PageController::class, 'exportPdf'])->name('forms.export.pdf')->whereNumber('form');
     Route::get('/forms/{form}/export/uang-saku', [PageController::class, 'exportUangSakuPdf'])->name('forms.export.uang-saku')->whereNumber('form');
     Route::get('/forms/{form}/export/presensi', [PageController::class, 'exportPresensiPdf'])->name('forms.export.presensi')->whereNumber('form');

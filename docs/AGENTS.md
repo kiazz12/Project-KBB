@@ -95,3 +95,12 @@ Register and forgot-password are disabled. Only superadmin creates accounts.
 - **`resources/views/app.blade.php`** is dead code (Inertia shell). Do not edit or reference it.
 - **PHP 8.3+ required** (`composer.json` constraint `^8.3`).
 - **CSS design system** — `resources/css/app.css` defines `.kbb-btn-*`, `.kbb-card`, `.kbb-input`, `.kbb-badge-*`, `.kbb-table`, dark mode overrides, and animation utilities. Prefer these over raw Tailwind for consistency.
+
+## Features added (verify before relying on)
+
+- **Excel export** — `maatwebsite/excel` (`SubmissionsExport` in `app/Exports/`). Route `forms.export.xlsx`; honors `DataClassification::canExport()`. Has no API counterpart (CSV/PDF do).
+- **Form duplication in UI** — `PageController::duplicateForm` + POST `forms.duplicate`. Available from forms list and form show page. Replicates form + fields as a `draft`.
+- **Bulk delete submissions** — `PageController::bulkDeleteSubmissions` + POST `forms.submissions.bulk-delete` (expects `ids[]`). Submissions list also has date filters `from`/`to` and `search`.
+- **FormEditor autosave** — settings auto-saved every 30s via `wire:poll` (`autoSaveSettings()`) and on tab switch; shows a transient "Tersimpan otomatis" indicator. Only settings are autosaved, not individual fields.
+- **NotificationBell** — already polls every 10s (`wire:poll.10s="refresh"`) and refreshes on window focus; no WebSocket/Echo setup. `.env` uses `BROADCAST_CONNECTION=log`, so real-time Echo is NOT wired up.
+- **Public form bot protection** — honeypot field `company_website` (hidden, must stay empty) checked at top of `PublicForm::submitForm()`. Throttled 10/min. No Turnstile/Captcha.

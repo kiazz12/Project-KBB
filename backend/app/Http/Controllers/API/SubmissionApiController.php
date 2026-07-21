@@ -7,6 +7,7 @@ use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\SubmissionData;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -56,6 +57,7 @@ class SubmissionApiController extends Controller
         $submission->delete();
 
         AuditService::log('submission.deleted', $submission, "Submission deleted from form '{$form->title}'");
+        NotificationService::notifySuperAdmins('submission_deleted', "menghapus submission dari form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title]);
 
         return response()->json([
             'success' => true,

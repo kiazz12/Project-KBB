@@ -24,25 +24,25 @@
     </div>
 </div>
 
-<form method="GET" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+<form method="GET" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 mb-6">
     <div class="flex flex-wrap gap-3">
         <div class="flex-1 min-w-[200px] relative">
             <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari form..."
-                class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none text-sm transition">
+                class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-kbb-500 focus:border-kbb-500 outline-none text-sm transition text-gray-900 dark:text-gray-100">
         </div>
-        <select name="status" class="px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-kbb-500 outline-none text-sm bg-white">
+        <select name="status" class="px-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-kbb-500 outline-none text-sm text-gray-900 dark:text-gray-100">
             <option value="">Semua Status</option>
             <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
             <option value="published" {{ request('status') === 'published' ? 'selected' : '' }}>Published</option>
             <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
         </select>
-        <button type="submit" class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium transition">
+        <button type="submit" class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-100 px-5 py-2.5 rounded-xl text-sm font-medium transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
             Filter
         </button>
         @if(request()->anyFilled(['search', 'status']))
-            <a href="{{ route('admin.forms.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 px-4 py-2.5 text-sm transition">
+            <a href="{{ route('admin.forms.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-4 py-2.5 text-sm transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 Reset
             </a>
@@ -50,11 +50,11 @@
     </div>
 </form>
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
-                <tr class="bg-gray-50/80 text-gray-500 text-left border-b border-gray-100">
+                <tr class="bg-gray-50/80 dark:bg-slate-900/60 text-gray-500 dark:text-gray-400 text-left border-b border-gray-100 dark:border-slate-700">
                     <th class="px-5 py-3.5 font-semibold">Judul</th>
                     <th class="px-5 py-3.5 font-semibold">Pembuat</th>
                     <th class="px-5 py-3.5 font-semibold">Status</th>
@@ -63,16 +63,16 @@
                     <th class="px-5 py-3.5 font-semibold text-right">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-50">
+            <tbody class="divide-y divide-gray-50 dark:divide-slate-700">
                 @forelse ($forms as $form)
-                    <tr class="hover:bg-gray-50/80 transition-all group">
+                    <tr class="hover:bg-gray-50/80 dark:hover:bg-slate-700/40 transition-all group">
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-kbb-50 to-kbb-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                                     <svg class="w-5 h-5 text-kbb-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="font-semibold text-gray-900 truncate max-w-[200px]">{{ $form->title }}</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[200px]">{{ $form->title }}</p>
                                     @if($form->description)
                                         <p class="text-xs text-gray-400 truncate max-w-[200px]">{{ $form->description }}</p>
                                     @endif
@@ -80,21 +80,21 @@
                             </div>
                         </td>
                         <td class="px-5 py-4">
-                            <span class="text-sm text-gray-500">{{ $form->user?->name ?? 'Deleted' }}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ $form->user?->name ?? 'Deleted' }}</span>
                         </td>
                         <td class="px-5 py-4">
-                            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold {{ $form->status->value === 'published' ? 'bg-emerald-50 text-emerald-700' : ($form->status->value === 'closed' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-500') }}">
+                            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold {{ $form->status->value === 'published' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400' : ($form->status->value === 'closed' ? 'bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-400' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-300') }}">
                                 <span class="w-1.5 h-1.5 rounded-full {{ $form->status->value === 'published' ? 'bg-emerald-500' : ($form->status->value === 'closed' ? 'bg-red-500' : 'bg-gray-400') }}"></span>
                                 {{ $form->status }}
                             </span>
                         </td>
                         <td class="px-5 py-4 text-center">
-                            <span class="text-sm font-semibold text-gray-900">{{ $form->submissions_count }}</span>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $form->submissions_count }}</span>
                         </td>
                         <td class="px-5 py-4 text-gray-400 text-sm">{{ $form->created_at->format('d/m/Y') }}</td>
                         <td class="px-5 py-4 text-right">
                             <a href="{{ route('admin.forms.show', $form) }}"
-                               class="inline-flex items-center gap-1.5 text-kbb-700 hover:text-kbb-800 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-kbb-50 transition">
+                               class="inline-flex items-center gap-1.5 text-kbb-700 hover:text-kbb-800 dark:text-kbb-400 dark:hover:text-kbb-300 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-kbb-50 dark:hover:bg-slate-700 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                 Detail
                             </a>
@@ -103,8 +103,8 @@
                 @empty
                     <tr>
                         <td colspan="6" class="px-5 py-16 text-center">
-                            <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <div class="w-14 h-14 bg-gray-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-7 h-7 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             </div>
                             <p class="text-sm text-gray-400">Tidak ada form.</p>
                         </td>
@@ -114,7 +114,7 @@
         </table>
     </div>
     @if ($forms->hasPages())
-        <div class="px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+        <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/40">
             {{ $forms->links() }}
         </div>
     @endif

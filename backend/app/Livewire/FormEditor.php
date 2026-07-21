@@ -6,6 +6,7 @@ use App\Models\Form;
 use App\Models\FormField;
 use App\Models\FormSection;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
@@ -305,6 +306,7 @@ class FormEditor extends Component
         $this->authorize('update', $this->form);
         $this->form->update(['status' => 'published']);
         AuditService::log('form_published', $this->form, "Form '{$this->form->title}' published");
+        NotificationService::notifySuperAdmins('form_published', "menerbitkan form \"{$this->form->title}\".", ['form_id' => $this->form->id, 'form_title' => $this->form->title]);
         $this->publishedUrl = url('/form/'.$this->form->slug);
         $this->showPublishModal = true;
     }
@@ -319,6 +321,7 @@ class FormEditor extends Component
         $this->authorize('update', $this->form);
         $this->form->update(['status' => 'closed']);
         AuditService::log('form_closed', $this->form, "Form '{$this->form->title}' closed");
+        NotificationService::notifySuperAdmins('form_closed', "menutup form \"{$this->form->title}\".", ['form_id' => $this->form->id, 'form_title' => $this->form->title]);
         $this->message = 'Form berhasil ditutup.';
         $this->messageType = 'success';
     }
@@ -344,6 +347,7 @@ class FormEditor extends Component
         ]);
 
         AuditService::log('form_settings_updated', $this->form, "Form '{$this->form->title}' settings updated");
+        NotificationService::notifySuperAdmins('form_settings_updated', "memperbarui pengaturan form \"{$this->form->title}\".", ['form_id' => $this->form->id, 'form_title' => $this->form->title]);
         $this->message = 'Pengaturan berhasil disimpan.';
         $this->messageType = 'success';
     }

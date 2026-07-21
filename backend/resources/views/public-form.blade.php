@@ -10,6 +10,7 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&family=plus+jakarta+Sans:500,600,700,800" rel="stylesheet" />
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -27,7 +28,7 @@
     <style>[wire\:loading], [wire\:loading\.delay] { display: none; }</style>
     @livewireStyles
 </head>
-<body class="min-h-screen bg-gradient-to-br from-kbb-50 via-white to-gold-50 flex items-start justify-center py-12 px-4">
+<body class="min-h-screen bg-gradient-to-br from-kbb-50 via-white to-gold-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-start justify-center py-12 px-4">
     @livewire('public-form', ['slug' => $slug], $slug)
     @livewireScripts
 </body>

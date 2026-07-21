@@ -8,6 +8,7 @@ use App\Models\FormSubmission;
 use App\Models\SubmissionData;
 use App\Models\User;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -78,23 +79,11 @@ class PageController extends Controller
             : Form::where('user_id', $userId)->where('status', 'published')->whereHas('submissions')->count();
         $avgSubsPerForm = $totalForms > 0 ? round($totalSubmissions / $totalForms, 1) : 0;
 
-        $weekDays = [];
-        $weekSubmissions = [];
-        foreach (range(6, 0) as $i) {
-            $date = now()->subDays($i)->format('Y-m-d');
-            $weekDays[] = now()->subDays($i)->translatedFormat('D');
-            $count = $isSuper
-                ? FormSubmission::whereDate('submitted_at', $date)->count()
-                : FormSubmission::whereIn('form_id', Form::where('user_id', $userId)->select('id'))->whereDate('submitted_at', $date)->count();
-            $weekSubmissions[] = $count;
-        }
-
         return view('dashboard.index', compact(
             'totalForms', 'publishedForms', 'draftForms', 'closedForms',
             'totalSubmissions', 'submissionsToday', 'submissionsThisWeek',
             'totalUsers', 'recentForms', 'topForms', 'latestSubmissions',
-            'formsWithSubmissions', 'avgSubsPerForm',
-            'weekDays', 'weekSubmissions'
+            'formsWithSubmissions', 'avgSubsPerForm'
         ));
     }
 
@@ -164,6 +153,9 @@ class PageController extends Controller
             $newField->form_id = $newForm->id;
             $newField->save();
         }
+
+        AuditService::log('form_duplicated', $newForm, "Form '{$form->title}' duplicated to '{$newForm->title}'");
+        NotificationService::notifySuperAdmins('form_duplicated', "menggandakan form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title]);
 
         return redirect()->route('forms.edit', $newForm)
             ->with('success', 'Form berhasil digandakan sebagai draft.');
@@ -254,6 +246,8 @@ class PageController extends Controller
             'count' => $submissions->count(),
         ]);
 
+        NotificationService::notifySuperAdmins('submissions_deleted', "menghapus {$submissions->count()} submission dari form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title, 'count' => $submissions->count()]);
+
         return redirect()->route('forms.submissions.index', $form)->with('success', $submissions->count().' submission berhasil dihapus.');
     }
 
@@ -270,6 +264,8 @@ class PageController extends Controller
             'form_id' => $form->id,
             'submission_id' => $submission->id,
         ]);
+
+        NotificationService::notifySuperAdmins('submission_deleted', "menghapus submission dari form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title]);
 
         return redirect()->route('forms.submissions.index', $form)->with('success', 'Submission berhasil dihapus.');
     }
@@ -334,6 +330,8 @@ class PageController extends Controller
             fclose($handle);
         };
 
+        NotificationService::notifySuperAdmins('data_exported', "mengunduh data form \"{$form->title}\" format CSV.", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'csv']);
+
         return response()->streamDownload($callback, "{$form->slug}-submissions.csv", [
             'Content-Type' => 'text/csv',
         ]);
@@ -347,6 +345,8 @@ class PageController extends Controller
         if ($form->data_classification && ! $form->data_classification->canExport()) {
             return redirect()->back()->with('error', 'Form dengan klasifikasi ini tidak dapat diexport.');
         }
+
+        NotificationService::notifySuperAdmins('data_exported', "mengunduh data form \"{$form->title}\" format XLSX.", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'xlsx']);
 
         return (new SubmissionsExport($form))->download("{$form->slug}-submissions.xlsx");
     }
@@ -369,6 +369,8 @@ class PageController extends Controller
             'submissions' => $submissions,
         ]);
 
+        NotificationService::notifySuperAdmins('data_exported', "mengunduh data form \"{$form->title}\" format PDF.", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'pdf']);
+
         return $pdf->download("{$form->slug}-submissions.pdf");
     }
 
@@ -385,6 +387,8 @@ class PageController extends Controller
             'fields' => $fields,
             'submissions' => $submissions,
         ]);
+
+        NotificationService::notifySuperAdmins('data_exported', "mengunduh data uang saku form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'uang_saku_pdf']);
 
         return $pdf->download('tanda-terima-uang-saku-peserta.pdf');
     }
@@ -426,6 +430,8 @@ class PageController extends Controller
             'showFooter' => true,
             'offset' => 0,
         ])->setPaper('a4', 'landscape');
+
+        NotificationService::notifySuperAdmins('data_exported', "mengunduh data presensi form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'presensi_pdf']);
 
         return $pdf->download('daftar-hadir-presensi.pdf');
     }

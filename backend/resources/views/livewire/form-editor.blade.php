@@ -15,17 +15,17 @@
     @endif
 
     <div class="flex items-center gap-3 mb-6">
-        <a href="{{ route('forms.show', $form) }}" class="text-gray-400 hover:text-gray-600 transition">
+        <a href="{{ route('forms.show', $form) }}" class="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </a>
-        <h1 class="text-2xl font-bold text-gray-900">Edit: {{ $form->title }}</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit: {{ $form->title }}</h1>
     </div>
 
-    <div class="flex gap-4 mb-6 border-b border-gray-200">
-        <button wire:click="selectTab('fields')" class="px-4 py-2.5 text-sm font-medium transition border-b-2 -mb-px {{ $tab === 'fields' ? 'text-kbb-700 border-kbb-700' : 'text-gray-500 border-transparent hover:text-gray-700' }}">
+    <div class="flex gap-4 mb-6 border-b border-gray-200 dark:border-slate-700">
+        <button wire:click="selectTab('fields')" class="px-4 py-2.5 text-sm font-medium transition border-b-2 -mb-px {{ $tab === 'fields' ? 'text-kbb-700 border-kbb-700 dark:text-kbb-400 dark:border-kbb-400' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-200' }}">
             Fields
         </button>
-        <button wire:click="selectTab('settings')" class="px-4 py-2.5 text-sm font-medium transition border-b-2 -mb-px {{ $tab === 'settings' ? 'text-kbb-700 border-kbb-700' : 'text-gray-500 border-transparent hover:text-gray-700' }}">
+        <button wire:click="selectTab('settings')" class="px-4 py-2.5 text-sm font-medium transition border-b-2 -mb-px {{ $tab === 'settings' ? 'text-kbb-700 border-kbb-700 dark:text-kbb-400 dark:border-kbb-400' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-200' }}">
             Pengaturan
         </button>
     </div>
@@ -369,7 +369,7 @@
 
     @if ($tab === 'settings')
         <div class="max-w-2xl">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
                 <form wire:submit="saveSettings">
                     <div class="space-y-4">
                         <div>

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Form;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -51,6 +52,7 @@ class CreateForm extends Component
         ]);
 
         AuditService::log('form_created', $form, "Form '{$form->title}' created");
+        NotificationService::notifySuperAdmins('form_created', "membuat form baru \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title]);
 
         return redirect()->route('forms.edit', $form)
             ->with('success', 'Form berhasil dibuat.');

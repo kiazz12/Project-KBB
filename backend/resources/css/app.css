@@ -876,3 +876,106 @@ img, video, iframe, canvas, svg {
   .kbb-table-wrapper { overflow: visible; }
   .kbb-table { font-size: 0.75rem; }
 }
+
+/* Dark mode — override design tokens. Layouts toggle `dark` class on <html>. */
+:root.dark {
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-text: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-border: #334155;
+  --color-border-light: #1e293b;
+  --color-primary: #60a5fa;
+  --color-primary-hover: #93c5fd;
+  --color-primary-light: #172554;
+  --color-accent: #d4af6a;
+  --color-accent-hover: #e3c489;
+  --color-accent-light: #2a2113;
+  --color-danger: #f87171;
+  --color-danger-hover: #fca5a5;
+  --color-danger-light: #2a1416;
+  --color-success: #4ade80;
+  --color-success-light: #0f2417;
+  --color-warning: #fbbf24;
+  --color-warning-light: #261d09;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.55), 0 4px 6px -4px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+:root.dark body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Remap common Tailwind utilities to the dark palette so hardcoded
+   bg-white / text-gray-* / bg-gray-* views follow dark mode automatically. */
+html.dark .bg-white { background-color: var(--color-surface) !important; }
+html.dark .bg-gray-50 { background-color: #172033 !important; }
+html.dark .bg-gray-100 { background-color: #1e293b !important; }
+html.dark .bg-gray-200 { background-color: #334155 !important; }
+html.dark .text-gray-900 { color: #e2e8f0 !important; }
+html.dark .text-gray-800 { color: #cbd5e1 !important; }
+html.dark .text-gray-700 { color: #cbd5e1 !important; }
+html.dark .text-gray-600 { color: #94a3b8 !important; }
+html.dark .text-gray-500 { color: #94a3b8 !important; }
+html.dark .text-gray-400 { color: #64748b !important; }
+html.dark .text-gray-300 { color: #94a3b8 !important; }
+html.dark .border-gray-100 { border-color: #1e293b !important; }
+html.dark .border-gray-200 { border-color: #334155 !important; }
+html.dark .border-gray-300 { border-color: #475569 !important; }
+html.dark .divide-gray-50 > * { border-color: #1e293b !important; }
+html.dark .divide-gray-100 > * { border-color: #1e293b !important; }
+html.dark .hover\:bg-gray-50:hover { background-color: #172033 !important; }
+html.dark .hover\:bg-gray-100:hover { background-color: #1e293b !important; }
+html.dark .ring-gray-200 { --tw-ring-color: #334155 !important; }
+html.dark .placeholder-gray-300::placeholder { color: #475569 !important; }
+html.dark .placeholder-gray-400::placeholder { color: #475569 !important; }
+
+/* Make kbb brand utilities readable on dark backgrounds */
+html.dark .text-kbb-700 { color: #93c5fd !important; }
+html.dark .text-kbb-600 { color: #60a5fa !important; }
+html.dark .text-kbb-800 { color: #bfdbfe !important; }
+html.dark .bg-kbb-50 { background-color: #172554 !important; }
+html.dark .bg-kbb-100 { background-color: #1e3a8a !important; }
+html.dark .border-kbb-100 { border-color: #1e3a8a !important; }
+html.dark .border-kbb-200 { border-color: #1e40af !important; }
+html.dark .from-kbb-50 { --tw-gradient-from: #172554 !important; }
+html.dark .to-kbb-100 { --tw-gradient-to: #1e3a8a !important; }
+html.dark .hover\:text-kbb-800:hover { color: #bfdbfe !important; }
+html.dark .hover\:bg-kbb-50:hover { background-color: #172554 !important; }
+
+/* Form controls in dark mode (inputs/textarea/select) across all views */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
+html.dark textarea,
+html.dark select {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder { color: #64748b !important; }
+html.dark input[type="datetime-local"],
+html.dark input[type="date"],
+html.dark input[type="time"] { color-scheme: dark; }
+
+/* Smooth transition when toggling */
+html.dark,
+html.dark body,
+html.dark .kbb-card,
+html.dark .kbb-surface {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+@keyframes flashIn {
+  0% { transform: translateY(-8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Mobile sidebar open state — wins over -ml-64, independent of lg:ml-0 */
+#sidebar.sidebar-open,
+#admin-sidebar.sidebar-open {
+  margin-left: 0 !important;
+}

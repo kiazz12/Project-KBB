@@ -9,7 +9,8 @@ class UserObserver
 {
     public function created(User $user): void
     {
-        $this->notifySuperAdmins("User baru '{$user->name}' ({$user->email}) telah dibuat.");
+        $displayName = $user->currentDisplayName();
+        $this->notifySuperAdmins("User baru '{$displayName}' ({$user->email}) telah dibuat.");
     }
 
     public function updated(User $user): void
@@ -19,20 +20,22 @@ class UserObserver
         }
 
         $changes = [];
-        foreach (['name', 'email', 'role', 'nip', 'opd'] as $field) {
+        foreach (['name', 'display_name', 'email', 'role', 'nip', 'opd'] as $field) {
             if ($user->wasChanged($field)) {
-                $changes[] = ucfirst($field === 'nip' ? 'NIP' : $field);
+                $changes[] = ucfirst($field === 'nip' ? 'NIP' : ($field === 'display_name' ? 'nama tampilan' : $field));
             }
         }
 
         if (! empty($changes)) {
-            $this->notifySuperAdmins("User '{$user->name}' telah diperbarui (".implode(', ', $changes).').');
+            $displayName = $user->currentDisplayName();
+            $this->notifySuperAdmins("User '{$displayName}' telah diperbarui (".implode(', ', $changes).').');
         }
     }
 
     public function deleted(User $user): void
     {
-        $this->notifySuperAdmins("User '{$user->name}' ({$user->email}) telah dihapus.");
+        $displayName = $user->currentDisplayName();
+        $this->notifySuperAdmins("User '{$displayName}' ({$user->email}) telah dihapus.");
     }
 
     private function notifySuperAdmins(string $message): void

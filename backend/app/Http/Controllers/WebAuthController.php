@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\UserSession;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use App\Services\SessionLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -41,6 +43,15 @@ class WebAuthController extends Controller
                 session()->flash('sessions_terminated', "{$deletedSessions} session lama telah diterminasi karena login dari perangkat baru.");
             }
 
+            $userSession = UserSession::create([
+                'user_id' => $user->id,
+                'display_name' => '',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'logged_in_at' => now(),
+            ]);
+            session()->put('user_session_id', $userSession->id);
+
             return redirect()->intended('/dashboard');
         }
 
@@ -51,34 +62,39 @@ class WebAuthController extends Controller
 
     public function changePassword(Request $request)
     {
-        $request->validate([
-            'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
-        ]);
-
         $user = $request->user();
 
-        if (! Hash::check($request->current_password, $user->password)) {
-            return back()->withErrors(['current_password' => 'Password saat ini tidak sesuai.']);
+        $rules = [
+            'new_password' => 'required|string|min:8|confirmed',
+        ];
+
+        if (! $user->isSuperAdmin()) {
+            $rules['current_password'] = 'required|string';
+        }
+
+        $request->validate($rules);
+
+        if (! $user->isSuperAdmin()) {
+            if (! Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Password saat ini tidak sesuai.']);
+            }
         }
 
         $user->update(['password' => Hash::make($request->new_password)]);
 
         AuditService::log('password.changed', $user, "User '{$user->name}' changed password");
-
-        User::where('role', 'super_admin')->get()->each(fn ($sa) => Notification::create([
-            'user_id' => $sa->id,
-            'type' => 'password_changed',
-            'message' => "Admin {$user->name} ({$user->email}) mengubah password akun mereka.",
-            'data' => ['admin_id' => $user->id, 'admin_name' => $user->name, 'admin_email' => $user->email],
-        ])
-        );
+        NotificationService::notifySuperAdmins('password_changed', "mengubah password akun mereka.");
 
         return back()->with('success', 'Password berhasil diubah.');
     }
 
     public function logout(Request $request)
     {
+        $sessionId = session('user_session_id');
+        if ($sessionId) {
+            UserSession::where('id', $sessionId)->update(['logged_out_at' => now()]);
+        }
+
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

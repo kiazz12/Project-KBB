@@ -89,6 +89,7 @@
             66% { transform: translate(-40px, -20px) scale(0.9); opacity: 0.2; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     @livewireStyles
 </head>
 <body class="bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 antialiased">

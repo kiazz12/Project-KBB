@@ -27,7 +27,7 @@
 
     @if($this->chartData['max'] > 0)
     <div style="position:relative;height:280px;">
-        <canvas id="activity-chart-canvas-{{ $this->getId() }}"></canvas>
+        <canvas id="activity-chart-canvas-{{ $this->getId() }}" data-chart-data="{{ json_encode($this->chartData) }}"></canvas>
     </div>
     @if(count($this->chartData['data']) > 0)
     <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-slate-700">
@@ -43,18 +43,19 @@
             <svg class="w-8 h-8 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
         </div>
         <p class="text-sm text-gray-400 dark:text-gray-500 mb-1">Belum ada data pengiriman</p>
-        <p class="text-xs text-gray-300 dark:text-gray-600">Pada periode {{ $ranges[$range] ?? $range }}</p>
+        <p class="text-xs text-gray-300 dark:text-gray-600">Pada periode {{ $ranges[$this->range] ?? $this->range }}</p>
     </div>
     @endif
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+@script
 <script>
-(function() {
-    const chartData = @json($this->chartData);
-    const canvasId = 'activity-chart-canvas-{{ $this->getId() }}';
+function initActivityChart(canvasId) {
     const canvas = document.getElementById(canvasId);
-    if (!canvas || chartData.max <= 0) return;
+    if (!canvas) return;
+
+    const chartData = JSON.parse(canvas.dataset.chartData);
+    if (!chartData || chartData.max <= 0) return;
 
     const ctx = canvas.getContext('2d');
     const isDark = document.documentElement.classList.contains('dark');
@@ -70,11 +71,10 @@
     hoverGradient.addColorStop(0, 'rgba(90,131,200,1)');
     hoverGradient.addColorStop(1, 'rgba(58,107,181,1)');
 
-    if (window['chart_instance_' + canvasId]) {
-        window['chart_instance_' + canvasId].destroy();
-    }
+    const prevChart = Chart.getChart(canvas);
+    if (prevChart) prevChart.destroy();
 
-    window['chart_instance_' + canvasId] = new Chart(ctx, {
+    new Chart(ctx, {
         type: 'bar',
         data: {
             labels: chartData.labels,
@@ -148,5 +148,18 @@
             }
         }
     });
-})();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initActivityChart('activity-chart-canvas-{{ $this->getId() }}');
+});
+
+Livewire.on('chart-updated', ({ chartData, canvasId }) => {
+    const canvas = document.getElementById(canvasId);
+    if (canvas) {
+        canvas.dataset.chartData = JSON.stringify(chartData);
+    }
+    initActivityChart(canvasId);
+});
 </script>
+@endscript

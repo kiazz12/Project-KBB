@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Form;
 use App\Models\FormSubmission;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -20,8 +21,14 @@ class ActivityChart extends Component
         '1y' => '1 Tahun',
     ];
 
+    public function updatedRange(): void
+    {
+        $this->dispatch('chart-updated', chartData: $this->chartData, canvasId: "activity-chart-canvas-{$this->getId()}");
+    }
+
     public function getChartDataProperty(): array
     {
+        /** @var User $user */
         $user = Auth::user();
         $isSuper = $user->isSuperAdmin();
         $userId = Auth::id();
@@ -61,7 +68,6 @@ class ActivityChart extends Component
                 for ($i = 12; $i >= 0; $i--) {
                     $weekStart = $now->copy()->subWeeks($i)->startOfWeek();
                     $weekEnd = $now->copy()->subWeeks($i)->endOfWeek();
-                    $key = $weekStart->format('Y-m-d');
                     $labels[] = $weekStart->translatedFormat('d M');
                     $count = 0;
                     $cursor = $weekStart->copy();

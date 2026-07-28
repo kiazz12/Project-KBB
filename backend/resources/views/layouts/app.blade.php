@@ -65,6 +65,7 @@
             } catch (e) {}
         })();
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

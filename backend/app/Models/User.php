@@ -56,6 +56,7 @@ class User extends Authenticatable
                 return $session->display_name;
             }
         }
+
         return $this->display_name ?: $this->name;
     }
 

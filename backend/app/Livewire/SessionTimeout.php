@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\UserSession;
+use App\Services\AuditService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
@@ -60,6 +62,14 @@ class SessionTimeout extends Component
 
     public function logout(): void
     {
+        $sessionId = Session::get('user_session_id');
+        if ($sessionId) {
+            UserSession::where('id', $sessionId)->update(['logged_out_at' => now()]);
+        }
+
+        $user = Auth::user();
+        AuditService::log('auth.session_timeout', $user, "Session expired due to inactivity for user '{$user?->name}'");
+
         Auth::guard('web')->logout();
         Session::invalidate();
         Session::regenerateToken();

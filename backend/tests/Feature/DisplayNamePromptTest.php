@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\DisplayNamePrompt;
 use App\Models\User;
 use App\Models\UserSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,7 +28,7 @@ class DisplayNamePromptTest extends TestCase
     {
         $this->actingAs($this->user);
 
-        $component = Livewire::test(\App\Livewire\DisplayNamePrompt::class);
+        $component = Livewire::test(DisplayNamePrompt::class);
 
         $component->assertSet('show', true);
     }
@@ -43,7 +44,7 @@ class DisplayNamePromptTest extends TestCase
         ]);
         session()->put('user_session_id', $session->id);
 
-        Livewire::test(\App\Livewire\DisplayNamePrompt::class)
+        Livewire::test(DisplayNamePrompt::class)
             ->set('displayName', 'John Doe')
             ->call('saveDisplayName');
 
@@ -62,7 +63,7 @@ class DisplayNamePromptTest extends TestCase
         ]);
         session()->put('user_session_id', $session->id);
 
-        Livewire::test(\App\Livewire\DisplayNamePrompt::class)
+        Livewire::test(DisplayNamePrompt::class)
             ->set('displayName', 'John Doe')
             ->call('saveDisplayName')
             ->assertSet('show', false);
@@ -72,7 +73,7 @@ class DisplayNamePromptTest extends TestCase
     {
         $this->actingAs($this->user);
 
-        Livewire::test(\App\Livewire\DisplayNamePrompt::class)
+        Livewire::test(DisplayNamePrompt::class)
             ->set('displayName', 'A')
             ->call('saveDisplayName')
             ->assertHasErrors(['displayName']);
@@ -89,7 +90,7 @@ class DisplayNamePromptTest extends TestCase
         ]);
         session()->put('user_session_id', $session->id);
 
-        Livewire::test(\App\Livewire\DisplayNamePrompt::class)
+        Livewire::test(DisplayNamePrompt::class)
             ->set('displayName', 'John Doe')
             ->call('saveDisplayName');
 

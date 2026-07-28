@@ -18,11 +18,25 @@ class DisplayNamePrompt extends Component
 
     public function mount(): void
     {
-        $this->show = true;
         $user = Auth::user();
-        if ($user) {
-            $this->displayName = $user->name ?? '';
+        if (! $user) {
+            $this->show = false;
+
+            return;
         }
+
+        $sessionId = session('user_session_id');
+        if ($sessionId) {
+            $session = UserSession::find($sessionId);
+            if ($session && $session->display_name !== '') {
+                $this->show = false;
+
+                return;
+            }
+        }
+
+        $this->show = true;
+        $this->displayName = $user->name ?? '';
     }
 
     public function saveDisplayName(): void

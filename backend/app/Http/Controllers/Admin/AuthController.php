@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\UserSession;
+use App\Services\AuditService;
 use App\Services\SessionLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,6 +48,17 @@ class AuthController extends Controller
                 session()->flash('sessions_terminated', "{$deletedSessions} session lama telah diterminasi karena login dari perangkat baru.");
             }
 
+            $userSession = UserSession::create([
+                'user_id' => $user->id,
+                'display_name' => '',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'logged_in_at' => now(),
+            ]);
+            session()->put('user_session_id', $userSession->id);
+
+            AuditService::log('auth.login', $user, "User '{$user->name}' logged in via admin panel");
+
             return redirect()->intended(route('admin.dashboard'));
         }
 
@@ -54,10 +67,23 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $sessionId = session('user_session_id');
+        if ($sessionId) {
+            UserSession::where('id', $sessionId)->update(['logged_out_at' => now()]);
+        }
+
+        $user = Auth::user();
+        AuditService::log('auth.logout', $user, "User '{$user?->name}' logged out from admin panel");
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect(route('admin.login'));
+        $cookieName = config('session.cookie');
+        if ($cookieName) {
+            cookie()->forget($cookieName);
+        }
+
+        return redirect(route('admin.login'))->withCookie(cookie()->forget($cookieName));
     }
 }

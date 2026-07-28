@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Form;
 use App\Models\FormSubmission;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -12,11 +13,11 @@ class ActivityChart extends Component
     public string $range = '7d';
 
     public array $ranges = [
-        '7d'  => '7 Hari',
-        '1m'  => '1 Bulan',
-        '3m'  => '3 Bulan',
-        '6m'  => '6 Bulan',
-        '1y'  => '1 Tahun',
+        '7d' => '7 Hari',
+        '1m' => '1 Bulan',
+        '3m' => '3 Bulan',
+        '6m' => '6 Bulan',
+        '1y' => '1 Tahun',
     ];
 
     public function getChartDataProperty(): array
@@ -80,7 +81,7 @@ class ActivityChart extends Component
                     $monthEnd = $month->copy()->endOfMonth();
                     $count = 0;
                     foreach ($raw as $dateStr => $c) {
-                        $dateObj = \Carbon\Carbon::parse($dateStr);
+                        $dateObj = Carbon::parse($dateStr);
                         if ($dateObj->gte($monthStart) && $dateObj->lte($monthEnd)) {
                             $count += $c;
                         }

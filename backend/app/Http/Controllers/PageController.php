@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PageController extends Controller
 {
@@ -110,6 +111,8 @@ class PageController extends Controller
 
         $forms = $query->latest()->paginate(15)->withQueryString();
 
+        AuditService::log('forms.viewed', null, 'Forms list viewed');
+
         return view('forms.index', compact('forms'));
     }
 
@@ -124,6 +127,8 @@ class PageController extends Controller
             ->withCount(['fields', 'submissions', 'sections'])
             ->findOrFail($id);
         $this->authorize('view', $form);
+
+        AuditService::log('form.viewed', $form, "Form '{$form->title}' viewed");
 
         return view('forms.show', compact('form'));
     }
@@ -166,6 +171,8 @@ class PageController extends Controller
         $form = Form::with('fields')->findOrFail($id);
         $this->authorize('view', $form);
 
+        AuditService::log('form.analytics.viewed', $form, "Analytics viewed for form '{$form->title}'");
+
         $totalSubmissions = $form->submissions()->count();
         $submissionsByDate = $form->submissions()
             ->selectRaw('DATE(submitted_at) as date, COUNT(*) as count')
@@ -201,6 +208,8 @@ class PageController extends Controller
     {
         $form = Form::findOrFail($id);
         $this->authorize('view', $form);
+
+        AuditService::log('submissions.viewed', $form, "Submissions list viewed for form '{$form->title}'");
 
         $query = $form->submissions()->with('data.formField');
 
@@ -277,6 +286,8 @@ class PageController extends Controller
 
         $submission = FormSubmission::with('data.formField')->findOrFail($id);
 
+        AuditService::log('submission.viewed', $submission, "Submission #{$id} viewed on form '{$form->title}'");
+
         return view('forms.submissions.show', compact('form', 'submission'));
     }
 
@@ -330,6 +341,7 @@ class PageController extends Controller
             fclose($handle);
         };
 
+        AuditService::log('export.csv', $form, "Form '{$form->title}' exported as CSV");
         NotificationService::notifySuperAdmins('data_exported', "mengunduh data form \"{$form->title}\" format CSV.", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'csv']);
 
         return response()->streamDownload($callback, "{$form->slug}-submissions.csv", [
@@ -346,9 +358,10 @@ class PageController extends Controller
             return redirect()->back()->with('error', 'Form dengan klasifikasi ini tidak dapat diexport.');
         }
 
+        AuditService::log('export.xlsx', $form, "Form '{$form->title}' exported as XLSX");
         NotificationService::notifySuperAdmins('data_exported', "mengunduh data form \"{$form->title}\" format XLSX.", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'xlsx']);
 
-        return (new SubmissionsExport($form))->download("{$form->slug}-submissions.xlsx");
+        return Excel::download(new SubmissionsExport($form), "{$form->slug}-submissions.xlsx");
     }
 
     public function exportPdf(Request $request, int $id): mixed
@@ -369,6 +382,7 @@ class PageController extends Controller
             'submissions' => $submissions,
         ]);
 
+        AuditService::log('export.pdf', $form, "Form '{$form->title}' exported as PDF");
         NotificationService::notifySuperAdmins('data_exported', "mengunduh data form \"{$form->title}\" format PDF.", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'pdf']);
 
         return $pdf->download("{$form->slug}-submissions.pdf");
@@ -388,6 +402,7 @@ class PageController extends Controller
             'submissions' => $submissions,
         ]);
 
+        AuditService::log('export.uang_saku', $form, "Form '{$form->title}' uang saku exported as PDF");
         NotificationService::notifySuperAdmins('data_exported', "mengunduh data uang saku form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'uang_saku_pdf']);
 
         return $pdf->download('tanda-terima-uang-saku-peserta.pdf');
@@ -431,6 +446,7 @@ class PageController extends Controller
             'offset' => 0,
         ])->setPaper('a4', 'landscape');
 
+        AuditService::log('export.presensi', $form, "Form '{$form->title}' presensi exported as PDF");
         NotificationService::notifySuperAdmins('data_exported', "mengunduh data presensi form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'presensi_pdf']);
 
         return $pdf->download('daftar-hadir-presensi.pdf');

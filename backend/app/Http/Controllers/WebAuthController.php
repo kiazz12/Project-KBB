@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
 use App\Models\User;
 use App\Models\UserSession;
 use App\Services\AuditService;
@@ -52,6 +51,8 @@ class WebAuthController extends Controller
             ]);
             session()->put('user_session_id', $userSession->id);
 
+            AuditService::log('auth.login', $user, "User '{$user->name}' logged in");
+
             return redirect()->intended('/dashboard');
         }
 
@@ -83,7 +84,7 @@ class WebAuthController extends Controller
         $user->update(['password' => Hash::make($request->new_password)]);
 
         AuditService::log('password.changed', $user, "User '{$user->name}' changed password");
-        NotificationService::notifySuperAdmins('password_changed', "mengubah password akun mereka.");
+        NotificationService::notifySuperAdmins('password_changed', 'mengubah password akun mereka.');
 
         return back()->with('success', 'Password berhasil diubah.');
     }
@@ -95,17 +96,25 @@ class WebAuthController extends Controller
             UserSession::where('id', $sessionId)->update(['logged_out_at' => now()]);
         }
 
+        $user = Auth::user();
+        AuditService::log('auth.logout', $user, "User '{$user?->name}' logged out");
+
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        $cookieName = config('session.cookie');
+        if ($cookieName) {
+            cookie()->forget($cookieName);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Logout berhasil.',
-            ]);
+            ])->withCookie(cookie()->forget($cookieName));
         }
 
-        return redirect('/login');
+        return redirect('/login')->withCookie(cookie()->forget($cookieName));
     }
 }

@@ -1,6 +1,6 @@
 # AGENTS.md — Project KBB
 
-Custom Google Forms clone for Pemerintah Kabupaten Bandung Barat (KBB). Laravel 13 + Livewire 4 + Blade + Tailwind CSS (CDN). No frontend build step for JS — Tailwind is CDN-loaded.
+Custom Google Forms clone for Pemerintah Kabupaten Bandung Barat (KBB). Laravel 13 + Livewire 4 + Blade. Tailwind CSS loaded via CDN in Blade templates (no utility-class build step). Vite processes `resources/js/app.js` and `resources/css/app.css` but is not used for Tailwind.
 
 ## Repository Layout
 
@@ -10,7 +10,7 @@ project-kbb/
 │   ├── app/
 │   │   ├── Domains/          ← Domain services (6 domains)
 │   │   ├── Http/Controllers/ ← Web, API, Admin controllers
-│   │   ├── Livewire/         ← 3 main components + helpers
+│   │   ├── Livewire/         ← CreateForm, FormEditor, PublicForm + 4 helpers
 │   │   ├── Models/           ← Eloquent models
 │   │   ├── Services/         ← App-level services (Audit, Notification, SessionLimit, Form, Submission)
 │   │   ├── Enums/            ← UserRole, FormStatus, FieldType, DataClassification
@@ -22,7 +22,7 @@ project-kbb/
 │   ├── tests/                ← PHPUnit (Feature + Unit)
 │   └── config/
 ├── docs/             ← Architecture docs, phase plans, master task list
-└── start.bat         ← Starts both backend (port 8000) and frontend (port 5173)
+└── start.bat         ← Stale: tries to start nonexistent frontend/ directory
 ```
 
 ## Commands
@@ -30,6 +30,9 @@ project-kbb/
 All commands run from `backend/` directory:
 
 ```bash
+# Initial setup (install deps, generate key, migrate, build assets)
+composer setup
+
 # Dev server (artisan + vite)
 php artisan serve          # API at :8000
 npm run dev                # Vite at :5173
@@ -53,7 +56,7 @@ php artisan migrate:fresh --seed   # Full reset
 # Queue worker
 php artisan queue:listen --tries=1 --timeout=0
 
-# PDF viewer
+# Log viewer
 php artisan pail           # Log viewer
 ```
 
@@ -82,7 +85,7 @@ Three levels: `public`, `internal`, `sensitive`. Controls export permissions (`D
 
 - PHPUnit with **SQLite in-memory** for tests (see `phpunit.xml` env overrides)
 - Tests use `actingAs()` for auth, no external services needed
-- Current coverage: 8 test files (low). See `docs/MASTER-TASK-LIST.md` Priority 4 for test gaps.
+- Current coverage: 7 test files (low). See `docs/MASTER-TASK-LIST.md` Priority 4 for test gaps.
 
 ## Code Style
 

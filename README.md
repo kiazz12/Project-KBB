@@ -1,0 +1,285 @@
+# Project KBB
+
+**Sistem Formulir Digital untuk Pemerintah Kabupaten Bandung Barat**
+
+Aplikasi web untuk membuat, mengelola, dan mengumpulkan data melalui formulir daring — setara dengan Google Forms, tetapi berjalan di server pemerintah sendiri dengan keamanan berbasis OPD, pencatatan audit, dan klasifikasi data.
+
+---
+
+## Daftar Isi
+
+- [Tentang Proyek](#tentang-proyek)
+- [Fitur Utama](#fitur-utama)
+- [Teknologi](#teknologi)
+- [Arsitektur](#arsitektur)
+- [Struktur Repositori](#struktur-repositori)
+- [Basis Data](#basis-data)
+- [Persyaratan](#persyaratan)
+- [Instalasi & Setup](#instalasi--setup)
+- [Perintah Pengembangan](#perintah-pengembangan)
+- [Pengujian](#pengujian)
+- [Dokumentasi](#dokumentasi)
+- [Lisensi](#lisensi)
+
+---
+
+## Tentang Proyek
+
+Pemerintah Kabupaten Bandung Barat memiliki **47 OPD** (Organisasi Perangkat Daerah) yang masing-masing membutuhkan cara mengumpulkan data dari masyarakat maupun internal. Sebelumnya pengumpulan data dilakukan secara manual atau melalui layanan pihak ketiga yang tidak terintegrasi.
+
+Project KBB dibangun untuk menyediakan:
+
+- Formulir digital yang mudah digunakan oleh operator di setiap OPD
+- Pengumpulan data publik dan internal secara terstruktur dan aman
+- Pengamanan data berdasarkan tingkat kerahasiaan (publik, internal, sensitif)
+- Pencatatan seluruh aktivitas penting untuk keperluan audit
+- Dashboard analitik bagi pengelola
+
+---
+
+## Fitur Utama
+
+### Pembuatan Formulir
+- 13 jenis bidang: teks, email, angka, pilihan ganda, radio, checkbox, textarea, tanggal, unggahan file, judul, paragraf, rating, dan matriks
+- Editor drag-and-drop berbasis Livewire (`FormEditor`)
+- Pengelompokan bidang dengan **section**
+- Logika bersyarat (menampilkan/menyembunyikan bidang berdasarkan jawaban lain)
+- Mesin formula untuk bidang terhitung otomatis (`computed`)
+- Pengaturan: batas pengumpulan, waktu buka/tutup, wajib login, klasifikasi data
+
+### Formulir Publik
+- Dapat diakses tanpa login melalui `/form/{slug}`
+- Validasi real-time via Livewire
+- Pencarian peserta otomatis dari tabel `participants`
+- Proteksi double-submit, halaman/URL konfirmasi setelah mengirim
+- Perekaman IP & User-Agent hanya jika diaktifkan (`collect_ip`)
+
+### Pengelolaan Data & Ekspor
+- Daftar pengumpulan data dengan paginasi, detail per bidang, dan penghapusan
+- Ekspor **CSV** (Maatwebsite Excel), **PDF** (DOMPDF), serta format khusus **Uang Saku** dan **Presensi** (FPDF)
+- Ekspor **diblokir** untuk formulir berklasifikasi **sensitive**
+
+### Dashboard & Analitik
+- Statistik formulir (total, published, draft, closed)
+- Statistik pengumpulan data (total, hari ini, minggu ini)
+- Grafik aktivitas (Chart.js) dengan rentang waktu 7 hari s.d. 1 tahun
+- Dashboard admin terpisah
+
+### Keamanan
+- **3 sistem autentikasi** paralel (Web sesi, API token Sanctum, Admin super_admin)
+- Pembatasan sesi aktif: super_admin = 1, admin = 3
+- Idle timeout 5 menit dengan peringatan 2 menit sebelum logout otomatis
+- Rate limit login API (5/menit) dan pengiriman publik (10/menit)
+- Pencatatan audit untuk seluruh aksi penting
+- CSRF protection dan hashing kata sandi
+
+---
+
+## Teknologi
+
+| Lapisan | Teknologi |
+|---------|-----------|
+| Framework | Laravel 13 |
+| Bahasa | PHP 8.3+ |
+| ORM | Eloquent |
+| Interaktivitas | Livewire 4 (Blade) |
+| Templat | Blade |
+| Gaya | Tailwind CSS (via CDN, tanpa build step) |
+| Grafik | Chart.js 4 (via CDN) |
+| Auth API | Laravel Sanctum 4 |
+| Ekspor | Maatwebsite Excel, DOMPDF, FPDF |
+| Basis Data | MySQL (produksi) / SQLite in-memory (testing) |
+| Pengujian | PHPUnit 12 |
+| Gaya Kode | Laravel Pint |
+| Build | Vite (untuk `resources/js` & `resources/css`) |
+
+---
+
+## Arsitektur
+
+### Modular Monolith
+Satu aplikasi Laravel yang kodenya diorganisasi berdasarkan **domain bisnis**, bukan lapisan teknis. Realistis untuk proyek berjalan, mudah di-deploy, dan bisa berkembang ke microservices di kemudian hari.
+
+### Enam Domain Utama (`app/Domains/`)
+
+| Domain | Layanan | Fungsi |
+|--------|---------|--------|
+| Auth | `AuthService`, `AuthorizationService` | Login/logout, izin akses, penyaringan kueri |
+| PublicForms | `PublicFormService` | Penyajian & pengiriman formulir publik |
+| InternalForms | `FormManagementService` | CRUD formulir & bidang |
+| Submissions | `SubmissionService` | Pengelolaan jawaban |
+| Reporting | `ReportingService` | Dashboard, statistik, ekspor |
+| Audit | `AuditDomainService` | Pencatatan aktivitas |
+
+> **Catatan (hutang teknis):** layanan domain sudah ada tetapi **belum dipakai controller**. Controller masih memakai Eloquent langsung + `App\Services\AuditService`. Lihat `docs/MASTER-TASK-LIST.md`.
+
+### Tiga Sistem Autentikasi Paralel
+
+| Sistem | Rute | Driver | Kontroler |
+|--------|------|--------|-----------|
+| Web | `routes/web.php` | Session | `WebAuthController` |
+| API | `routes/api.php` | Token Sanctum | `API/AuthController` |
+| Admin | `routes/admin.php` | Session (khusus super_admin) | `Admin/AuthController` |
+
+### Pengendalian Akses Berbasis OPD
+
+- **super_admin**: akses semua data, kelola pengguna
+- **admin**: akses formulir milik sendiri + formulir OPD yang sama
+
+`FormPolicy` (terdaftar via Gate) membatasi *view/edit* ke formulir milik sendiri; logika cakupan OPD ada di `AuthorizationService::applyFormAccessConstraints()` (belum terhubung ke controller).
+
+### Klasifikasi Data
+
+| Klasifikasi | Ekspor | Retensi |
+|-------------|:------:|:-------:|
+| public | ✅ | Selamanya |
+| internal | ✅ (dengan log) | 1 tahun |
+| sensitive | ❌ (diblokir) | 90 hari |
+
+---
+
+## Struktur Repositori
+
+```
+project-kbb/
+├── backend/                    ← SELURUH kode aplikasi (Laravel)
+│   ├── app/
+│   │   ├── Domains/            ← 6 layanan domain
+│   │   ├── Http/Controllers/   ← Web, API, Admin
+│   │   ├── Livewire/           ← 7 komponen Livewire
+│   │   ├── Models/             ← 11 model Eloquent
+│   │   ├── Services/           ← 5 layanan aplikasi (Audit, Notification, SessionLimit, Form, Submission)
+│   │   ├── Enums/              ← UserRole, FormStatus, FieldType, DataClassification
+│   │   ├── Policies/           ← FormPolicy
+│   │   └── Exports/            ← Ekspor Excel
+│   ├── resources/views/        ← Templat Blade + Livewire
+│   ├── routes/                 ← web.php, api.php, admin.php, console.php
+│   ├── database/migrations/    ← 26 migrasi
+│   ├── tests/                  ← PHPUnit (Feature + Unit)
+│   └── config/
+├── docs/                       ← Dokumentasi arsitektur & rencana
+└── start.bat                   ← USANG (merujuk frontend/ yang tidak ada; abaikan)
+```
+
+**Frontend adalah Blade + Livewire** — bukan React. Dokumen lama dan `backend/pnpm-lock.yaml` menyebut React 19 / Inertia SPA yang tidak pernah dibangun; abaikan.
+
+---
+
+## Basis Data
+
+26 migrasi → 11 model utama:
+
+| Tabel | Fungsi |
+|-------|--------|
+| `users` | Pengguna (role, nip, `opd_id`, display_name) |
+| `opds` | 47 Organisasi Perangkat Daerah |
+| `forms` | Formulir (slug, status, klasifikasi data, pengaturan) |
+| `form_sections` | Bagian/kelompok bidang |
+| `form_fields` | Bidang formulir (jenis, validasi, formula, kondisi) |
+| `form_submissions` | Kiriman jawaban |
+| `submission_data` | Nilai jawaban per bidang |
+| `audit_logs` | Catatan aktivitas (old/new values) |
+| `notifications` | Notifikasi pengguna |
+| `participants` | Data peserta (autocomplete) |
+| `user_sessions` | Pelacakan sesi aktif |
+
+---
+
+## Persyaratan
+
+- PHP 8.3+
+- Composer
+- Node.js + npm (untuk Vite & `composer dev`)
+- MySQL 8+ (produksi) atau SQLite (pengembangan cepat)
+- Redis (opsional, untuk cache/queue)
+
+---
+
+## Instalasi & Setup
+
+Semua perintah dijalankan dari direktori `backend/`.
+
+> **Penting:** repositori ini **tidak menyertakan `.env.example`**. Skrip `composer setup` akan gagal pada langkah menyalin `.env`, jadi buat `.env` secara manual:
+
+```bash
+cd backend
+
+# 1. Buat .env secara manual (tidak ada .env.example untuk disalin)
+cp .env.example .env        # jika tersedia di lingkungan Anda, ATAU buat dari config Laravel:
+php artisan key:generate
+
+# 2. Atur koneksi database di .env
+#    DB_CONNECTION=mysql  (atau sqlite untuk pengembangan cepat)
+#    DB_DATABASE=project-kbb
+
+# 3. Install dependensi
+composer install
+npm install --ignore-scripts
+
+# 4. Migrasi + seed
+php artisan migrate --seed
+
+# 5. Build aset
+npm run build
+```
+
+Alternatif: jika `.env.example` tersedia, jalankan:
+
+```bash
+composer setup
+```
+
+---
+
+## Perintah Pengembangan
+
+```bash
+# Server aplikasi + antrean + log + Vite sekaligus (butuh Node.js)
+composer dev
+
+# Terpisah
+php artisan serve            # aplikasi di http://localhost:8000
+npm run dev                  # Vite di http://localhost:5173
+php artisan queue:listen --tries=1 --timeout=0
+php artisan pail             # viewer log
+
+# Basis data
+php artisan migrate
+php artisan db:seed
+php artisan migrate:fresh --seed    # reset total
+
+# Pengujian
+php artisan test                     # semua test
+php artisan test --filter=LoginSessionTest
+php artisan test --filter="nama_metode_test"
+
+# Gaya kode
+php vendor/bin/pint
+```
+
+---
+
+## Pengujian
+
+- PHPUnit 12 dengan **SQLite in-memory** (lihat `phpunit.xml`) — tidak butuh layanan eksternal
+- Isolasi per test dengan `RefreshDatabase`, autentikasi via `actingAs()`
+- 7 berkas test (Feature + Unit) — cakupan masih rendah, lihat `docs/MASTER-TASK-LIST.md`
+
+---
+
+## Dokumentasi
+
+Dokumentasi lengkap berada di direktori `docs/`:
+
+| Dokumen | Isi |
+|---------|-----|
+| [docs/PROJECT-OVERVIEW.md](docs/PROJECT-OVERVIEW.md) | Gambaran umum proyek, fitur, skema basis data |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arsitektur, alur data, skema lengkap |
+| [docs/MASTER-TASK-LIST.md](docs/MASTER-TASK-LIST.md) | Daftar tugas & rencana implementasi |
+| [docs/INDEX.md](docs/INDEX.md) | Indeks dokumentasi & roadmap fase |
+
+---
+
+## Lisensi
+
+Proyek ini dikembangkan untuk internal Pemerintah Kabupaten Bandung Barat (SPBE). Framework Laravel berlisensi MIT.

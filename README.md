@@ -282,4 +282,4 @@ Dokumentasi lengkap berada di direktori `docs/`:
 
 ## Lisensi
 
-Proyek ini dikembangkan untuk internal Pemerintah Kabupaten Bandung Barat (SPBE). Framework Laravel berlisensi MIT.
+Perangkat lunak ini adalah **properti Hizkia Sirait** dan dikembangkan khusus untuk **Pemerintah Kabupaten Bandung Barat**. Hak penggunaan terbatas hanya untuk kedua pihak tersebut (lihat [LICENSE](LICENSE)). Komponen pihak ketiga (Laravel dll.) tetap tunduk pada lisensi masing-masing.

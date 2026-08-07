@@ -1,21 +1,70 @@
-MIT License
+PERJANJIAN LISENSI PERANGKAT LUNAK TERBATAS
+PROJECT KBB — SISTEM FORMULIR DIGITAL PEMERINTAH KABUPATEN BANDUNG BARAT
 
 Copyright (c) 2026 Hizkia Sirait
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+HAK CIPTA DILINDUNGI / ALL RIGHTS RESERVED
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+---
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+## 1. PARA PIHAK
+
+Perjanjian lisensi ini dibuat antara:
+
+1. **Hizkia Sirait**, selaku pemegang hak cipta sekaligus pengembang ("Pemegang Hak Cipta"); dan
+2. **Pemerintah Kabupaten Bandung Barat**, termasuk seluruh Organisasi Perangkat Daerah (OPD) di lingkungannya ("Pemerintah Daerah").
+
+Perangkat lunak ini beserta seluruh dokumentasi, berkas konfigurasi, data contoh, dan materi terkait lainnya (selanjutnya disebut "**Perangkat Lunak**") merupakan karya cipta milik Pemegang Hak Cipta.
+
+## 2. PEMBERIAN LISENSI
+
+Pemegang Hak Cipta memberikan hak non-eksklusif, tidak dapat dialihkan, dan tidak dapat disublisensikan kepada Pemerintah Daerah untuk:
+
+a. menggunakan dan mengoperasikan Perangkat Lunak untuk keperluan operasional internal pemerintahan;
+b. mengumpulkan, mengelola, dan mengolah data melalui Perangkat Lunak;
+c. memelihara, memperbaiki, dan menyebarluaskan Perangkat Lunak di dalam lingkungan internal Pemerintah Daerah;
+d. membuat salinan cadangan (backup) semata-mata untuk tujuan operasional.
+
+Hak penggunaan juga diberikan kepada Pemegang Hak Cipta untuk keperluan pengembangan, pemeliharaan, dan peningkatan Perangkat Lunak.
+
+## 3. LARANGAN
+
+Tanpa izin tertulis terlebih dahulu dari Pemegang Hak Cipta, DILARANG bagi pihak lain untuk:
+
+a. menyalin, menggandakan, memodifikasi, atau membuat karya turunan dari Perangkat Lunak;
+b. mempublikasikan, mendistribusikan, menyewakan, menjual, atau memperdagangkan Perangkat Lunak, baik berbayar maupun gratis;
+c. mensublisensikan atau memanfaatkan Perangkat Lunak di luar Pemerintah Daerah;
+d. menghapus atau mengubah pemberitahuan hak cipta pada Perangkat Lunak;
+e. menggunakan Perangkat Lunak untuk tujuan komersial di luar Pemerintah Daerah.
+
+## 4. KEPEMILIKAN
+
+Seluruh hak cipta, hak kekayaan intelektual, dan kepemilikan atas Perangkat Lunak tetap berada pada Pemegang Hak Cipta. Lisensi ini tidak mengalihkan kepemilikan apa pun atas Perangkat Lunak kepada Pemerintah Daerah.
+
+## 5. JANGKA WAKTU DAN PENGAKHIRAN
+
+a. Lisensi ini berlaku selama Pemerintah Daerah menggunakan Perangkat Lunak untuk kepentingan operasional pemerintahan.
+b. Hak penggunaan dapat berakhir dengan sendirinya apabila Pemerintah Daerah melanggar ketentuan dalam Perjanjian ini.
+c. Setelah pengakhiran, Pemerintah Daerah tetap dapat menggunakan data yang telah dikumpulkan dan wajib menghentikan penggunaan Perangkat Lunak kecuali disepakati lain secara tertulis.
+
+## 6. JAMINAN
+
+Perangkat Lunak disediakan **"APA ADANYA"** (AS IS) tanpa jaminan apa pun, tersurat maupun tersirat, termasuk namun tidak terbatas pada jaminan kelayakan dagang, kesesuaian untuk tujuan tertentu, dan tidak melanggar hak pihak ketiga.
+
+## 7. BATASAN TANGGUNG JAWAB
+
+Sejauh diizinkan oleh hukum, Pemegang Hak Cipta tidak bertanggung jawab atas segala klaim, kerugian langsung maupun tidak langsung, kehilangan data, atau kerusakan lain yang timbul dari penggunaan atau ketidakmampuan menggunakan Perangkat Lunak.
+
+## 8. KOMPONEN PIHAK KETIGA
+
+Komponen pihak ketiga (antara lain Laravel, Livewire, dan pustaka lain yang dipasang melalui Composer/npm) tetap tunduk pada lisensi masing-masing yang berlaku dan di luar cakupan Perjanjian ini.
+
+## 9. HUKUM YANG BERLAKU
+
+Perjanjian ini diatur dan ditafsirkan sesuai dengan hukum Negara Republik Indonesia. Setiap perselisihan yang timbul akan diselesaikan secara musyawarah, dan apabila tidak tercapai kesepakatan, diselesaikan di pengadilan yang berwenang di wilayah Kabupaten Bandung Barat.
+
+## 10. KETENTUAN LAIN
+
+Apabila salah satu ketentuan dalam Perjanjian ini dinyatakan tidak sah atau tidak dapat diberlakukan, ketentuan tersebut akan diganti dengan ketentuan yang sah yang paling mendekati maksud semula, dan ketentuan lainnya tetap berlaku sepenuhnya.
+
+---

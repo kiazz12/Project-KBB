@@ -16,7 +16,7 @@ class FieldController extends Controller
         $this->authorize('update', $form);
 
         $request->validate([
-            'type' => 'required|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature',
+            'type' => 'required|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature,computed',
             'label' => 'required|string|max:255',
             'placeholder' => 'nullable|string|max:255',
             'help_text' => 'nullable|string',
@@ -57,7 +57,7 @@ class FieldController extends Controller
         $this->authorize('update', $form);
 
         $request->validate([
-            'type' => 'sometimes|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature',
+            'type' => 'sometimes|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature,computed',
             'label' => 'sometimes|string|max:255',
             'placeholder' => 'nullable|string|max:255',
             'help_text' => 'nullable|string',

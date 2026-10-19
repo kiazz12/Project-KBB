@@ -26,7 +26,8 @@ class SubmissionService
         foreach ($fields as $field) {
             $value = $request->input("f_{$field->id}");
 
-            if ($field->type === 'checkbox' && is_array($value)) {
+            // REA: 'type' di-cast ke enum FieldType — bandingkan lewat ->value.
+            if ($field->type->value === 'checkbox' && is_array($value)) {
                 $value = implode(',', $value);
             }
 
@@ -78,7 +79,8 @@ class SubmissionService
 
     public function list(Form $form, Request $request): array
     {
-        $query = $form->submissions()->with('data.field');
+        // REA: relasi SubmissionData dinamai formField(), bukan field().
+        $query = $form->submissions()->with('data.formField');
 
         if ($search = $request->search) {
             $query->whereHas('data', function ($q) use ($search) {
@@ -93,7 +95,8 @@ class SubmissionService
 
     public function get(Form $form, FormSubmission $submission): FormSubmission
     {
-        return $submission->load(['data.field', 'user:id,name,email']);
+        // REA: relasi SubmissionData dinamai formField(), bukan field().
+        return $submission->load(['data.formField', 'user:id,name,email']);
     }
 
     public function delete(Form $form, FormSubmission $submission): void

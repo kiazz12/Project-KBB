@@ -111,6 +111,22 @@
         startCountdown();
     }
 
+    // REA D-01: catat aktivitas nyata pengguna (bukan polling otomatis),
+    // dithrottle agar tidak mengirim request Livewire terlalu sering.
+    let lastActivitySent = 0;
+    const ACTIVITY_THROTTLE_MS = 20000; // minimal 20 detik antar ping
+
+    function pingActivity() {
+        const now = Date.now();
+        if (now - lastActivitySent < ACTIVITY_THROTTLE_MS) return;
+        lastActivitySent = now;
+        $wire.call('recordActivity');
+    }
+
+    ['mousemove', 'keydown', 'scroll', 'touchstart'].forEach((evt) => {
+        document.addEventListener(evt, pingActivity, { passive: true, capture: true });
+    });
+
     Livewire.on('session-extended', () => {
         remainingSeconds = 300;
         stopCountdown();

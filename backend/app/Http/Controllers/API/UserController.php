@@ -38,6 +38,8 @@ class UserController extends Controller
             'role' => ['required', Rule::in([UserRole::SuperAdmin->value, UserRole::Admin->value])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
+            // REA S-08: opd_id sebelumnya diterima apa adanya (FK tak tervalidasi).
+            'opd_id' => 'nullable|integer|exists:opds,id',
         ]);
 
         $user = User::create([
@@ -68,6 +70,7 @@ class UserController extends Controller
             'role' => ['sometimes', Rule::in([UserRole::SuperAdmin->value, UserRole::Admin->value])],
             'nip' => 'nullable|string|max:255',
             'opd' => 'nullable|string|max:255',
+            'opd_id' => 'nullable|integer|exists:opds,id',
         ]);
 
         $data = $request->only(['name', 'email', 'role', 'nip', 'opd', 'opd_id']);

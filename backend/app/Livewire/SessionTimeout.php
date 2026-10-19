@@ -50,6 +50,22 @@ class SessionTimeout extends Component
         }
     }
 
+    /**
+     * Dipanggil dari frontend ketika pengguna benar-benar berinteraksi
+     * (mousemove/keydown/scroll/touchstart — lihat session-timeout.blade.php).
+     * Polling otomatis TIDAK dihitung sebagai aktivitas (rea D-01).
+     */
+    public function recordActivity(): void
+    {
+        if (! Auth::check() || $this->expired) {
+            return;
+        }
+
+        Session::put('last_activity_at', now()->timestamp);
+        $this->remainingSeconds = $this->timeoutMinutes * 60;
+        $this->showWarning = false;
+    }
+
     public function extendSession(): void
     {
         Session::put('last_activity_at', now()->timestamp);

@@ -10,6 +10,7 @@ use App\Services\AuditService;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SubmissionApiController extends Controller
@@ -41,6 +42,10 @@ class SubmissionApiController extends Controller
     {
         $this->authorize('view', $form);
 
+        // REA S-01: scope ke $form — sebelumnya submission milik form lain
+        // bisa diakses hanya dengan menebak ID (IDOR).
+        $submission = $form->submissions()->findOrFail($submission->id);
+
         $submission->load('data.formField');
 
         return response()->json([
@@ -52,7 +57,11 @@ class SubmissionApiController extends Controller
 
     public function destroy(Request $request, Form $form, FormSubmission $submission): JsonResponse
     {
-        $this->authorize('update', $form);
+        // REA: penghapusan wajib izin 'delete', bukan 'update'.
+        $this->authorize('delete', $form);
+
+        // REA S-01: scope ke $form (IDOR).
+        $submission = $form->submissions()->findOrFail($submission->id);
 
         $submission->delete();
 
@@ -73,13 +82,16 @@ class SubmissionApiController extends Controller
             ->with('fields')
             ->firstOrFail();
 
-        if ($form->isExpired() || $form->isFull()) {
+        if (! $form->isAcceptingSubmissions()) {
             return response()->json([
                 'success' => false,
                 'data' => null,
                 'message' => 'This form is no longer accepting submissions.',
             ], 410);
         }
+
+        // REA B-09: jangan bocorkan definisi field admin-only ke publik.
+        $form->setRelation('fields', $form->fields->reject->is_admin_only->values());
 
         return response()->json([
             'success' => true,
@@ -95,7 +107,7 @@ class SubmissionApiController extends Controller
             ->with('fields')
             ->firstOrFail();
 
-        if ($form->isExpired() || $form->isFull()) {
+        if (! $form->isAcceptingSubmissions()) {
             return response()->json([
                 'success' => false,
                 'data' => null,
@@ -135,6 +147,11 @@ class SubmissionApiController extends Controller
 
         $rules = [];
         foreach ($form->fields as $field) {
+            // REA B-09: peserta tidak boleh mengisi field admin-only via API.
+            if ($field->is_admin_only) {
+                continue;
+            }
+
             $fieldRules = [];
 
             if ($field->required) {
@@ -166,7 +183,7 @@ class SubmissionApiController extends Controller
         if ($form->settings['require_email'] ?? false) {
             $hasEmail = false;
             foreach ($form->fields as $field) {
-                if ($field->type->value === 'email' && ! empty($validated["field_{$field->id}"])) {
+                if ($field->type->value === 'email' && ! empty($validated["field_{$field->id}"] ?? null)) {
                     $hasEmail = true;
                     break;
                 }
@@ -180,22 +197,31 @@ class SubmissionApiController extends Controller
             }
         }
 
-        $submission = FormSubmission::create([
-            'uuid' => (string) Str::uuid(),
-            'form_id' => $form->id,
-            'user_id' => $request->user()?->id,
-            'ip_address' => $form->collect_ip ? $request->ip() : null,
-            'user_agent' => $form->collect_ip ? $request->userAgent() : null,
-            'submitted_at' => now(),
-        ]);
-
-        foreach ($form->fields as $field) {
-            SubmissionData::create([
-                'submission_id' => $submission->id,
-                'form_field_id' => $field->id,
-                'value' => $validated["field_{$field->id}"] ?? null,
+        // REA: simpan dalam satu transaksi agar data header + detail tidak parsial.
+        $submission = DB::transaction(function () use ($form, $request, $validated) {
+            $submission = FormSubmission::create([
+                'uuid' => (string) Str::uuid(),
+                'form_id' => $form->id,
+                'user_id' => $request->user()?->id,
+                'ip_address' => $form->collect_ip ? $request->ip() : null,
+                'user_agent' => $form->collect_ip ? $request->userAgent() : null,
+                'submitted_at' => now(),
             ]);
-        }
+
+            foreach ($form->fields as $field) {
+                if ($field->is_admin_only) {
+                    continue;
+                }
+
+                SubmissionData::create([
+                    'submission_id' => $submission->id,
+                    'form_field_id' => $field->id,
+                    'value' => $validated["field_{$field->id}"] ?? null,
+                ]);
+            }
+
+            return $submission;
+        });
 
         AuditService::log('submission.created', $submission, "New submission on form '{$form->title}'");
 

@@ -170,9 +170,20 @@ class FormCrudController extends Controller
         $newForm->status = 'draft';
         $newForm->save();
 
+        // REA B-04: salin sections lebih dulu lalu petakan ulang section_id field
+        // (sebelumnya field menunjuk ke section form asal → duplikat rusak/salah section).
+        $sectionMap = [];
+        foreach ($form->sections as $section) {
+            $newSection = $section->replicate(['form_id', 'created_at', 'updated_at']);
+            $newSection->form_id = $newForm->id;
+            $newSection->save();
+            $sectionMap[$section->id] = $newSection->id;
+        }
+
         foreach ($form->fields as $field) {
             $newField = $field->replicate(['form_id', 'created_at', 'updated_at']);
             $newField->form_id = $newForm->id;
+            $newField->section_id = $sectionMap[$field->section_id] ?? null;
             $newField->save();
         }
 
@@ -285,7 +296,8 @@ class FormCrudController extends Controller
                     $row = [$submission->uuid, $submission->submitted_at];
                     $data = $submission->data->keyBy('form_field_id');
                     foreach ($fields as $field) {
-                        $row[] = $data->get($field->id)?->value ?? '';
+                        // REA: antisipasi CSV/formula injection pada nilai peserta.
+                        $row[] = \App\Support\Csv::sanitize($data->get($field->id)?->value ?? '');
                     }
                     fputcsv($handle, $row);
                 }

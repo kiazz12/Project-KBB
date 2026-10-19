@@ -53,15 +53,25 @@ class FormManagementService
 
     public function duplicateForm(Form $form, User $user): Form
     {
-        $newForm = $form->replicate([]);
+        $newForm = $form->replicate(['uuid', 'slug', 'created_at', 'updated_at']);
         $newForm->user_id = $user->id;
         $newForm->slug = Str::slug($form->title).'-copy-'.Str::random(6);
         $newForm->status = 'draft';
         $newForm->save();
 
-        $form->fields->each(function ($field) use ($newForm) {
-            $newField = $field->replicate([]);
+        // REA B-04: salin sections lalu petakan ulang section_id field.
+        $sectionMap = [];
+        foreach ($form->sections as $section) {
+            $newSection = $section->replicate(['form_id', 'created_at', 'updated_at']);
+            $newSection->form_id = $newForm->id;
+            $newSection->save();
+            $sectionMap[$section->id] = $newSection->id;
+        }
+
+        $form->fields->each(function ($field) use ($newForm, $sectionMap) {
+            $newField = $field->replicate(['form_id', 'created_at', 'updated_at']);
             $newField->form_id = $newForm->id;
+            $newField->section_id = $sectionMap[$field->section_id] ?? null;
             $newField->save();
         });
 
@@ -86,7 +96,8 @@ class FormManagementService
             'type' => $data['type'],
             'required' => $data['required'] ?? false,
             'order' => $maxOrder + 1,
-            'config' => $data['config'] ?? null,
+            // REA: kolom 'config' tidak ada di form_fields — opsi disimpan di 'options'.
+            'options' => $data['options'] ?? ($data['config'] ?? null),
         ]);
     }
 
@@ -96,7 +107,7 @@ class FormManagementService
             'label' => $data['label'] ?? $field->label,
             'type' => $data['type'] ?? $field->type,
             'required' => $data['required'] ?? $field->required,
-            'config' => $data['config'] ?? $field->config,
+            'options' => $data['options'] ?? ($data['config'] ?? $field->options),
         ]);
 
         return $field;

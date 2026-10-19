@@ -94,6 +94,11 @@ class Form extends Model
         return $query->where('status', FormStatus::Closed->value);
     }
 
+    public function isNotOpenYet(): bool
+    {
+        return $this->starts_at && $this->starts_at->isFuture();
+    }
+
     public function isExpired(): bool
     {
         return $this->ends_at && $this->ends_at->isPast();
@@ -102,5 +107,13 @@ class Form extends Model
     public function isFull(): bool
     {
         return $this->max_submissions && $this->submissions()->count() >= $this->max_submissions;
+    }
+
+    public function isAcceptingSubmissions(): bool
+    {
+        return $this->status === FormStatus::Published
+            && ! $this->isNotOpenYet()
+            && ! $this->isExpired()
+            && ! $this->isFull();
     }
 }

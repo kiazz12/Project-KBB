@@ -35,6 +35,7 @@ class FormField extends Model
             'required' => 'boolean',
             'type' => FieldType::class,
             'formula' => 'array',
+            'conditions' => 'array',
             'is_admin_only' => 'boolean',
         ];
     }

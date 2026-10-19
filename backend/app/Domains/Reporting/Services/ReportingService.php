@@ -11,7 +11,8 @@ class ReportingService
 {
     public function getDashboardStats(User $user): array
     {
-        if ($user->role === 'super_admin') {
+        // REA: role di-cast ke enum UserRole — pembandingan string selalu salah.
+        if ($user->isSuperAdmin()) {
             $formsCount = Form::count();
             $submissionsCount = FormSubmission::count();
             $usersCount = User::count();
@@ -25,7 +26,7 @@ class ReportingService
             'total_forms' => $formsCount,
             'total_submissions' => $submissionsCount,
             'total_users' => $usersCount,
-            'published_forms' => Form::where('status', 'published')->count(),
+            'published_forms' => Form::published()->count(),
         ];
     }
 
@@ -33,7 +34,7 @@ class ReportingService
     {
         $query = Form::query();
 
-        if ($user->role !== 'super_admin') {
+        if (! $user->isSuperAdmin()) {
             $query->where('user_id', $user->id);
         }
 
@@ -57,17 +58,18 @@ class ReportingService
 
     protected function calculateSubmissionRate(Form $form): string
     {
-        $publishedAt = $form->published_at;
+        // REA: kolom published_at tidak ada — pakai created_at sebagai fallback.
+        $publishedAt = $form->published_at ?? $form->created_at;
         if (! $publishedAt) {
             return '0%';
         }
 
-        $days = now()->diffInDays($publishedAt);
+        $days = (int) abs(now()->diffInDays($publishedAt));
         if ($days === 0) {
             return '0%';
         }
 
-        $rate = ($form->submissions->count() / $days) * 100;
+        $rate = ($form->submissions()->count() / $days) * 100;
 
         return round($rate, 2).'%';
     }
@@ -93,7 +95,8 @@ class ReportingService
 
             foreach ($fields as $field) {
                 $data = $submission->data()->where('form_field_id', $field->id)->first();
-                $row[] = $data ? '"'.str_replace('"', '""', $data->value).'"' : '';
+                // REA: antisipasi CSV/formula injection pada nilai peserta.
+                $row[] = $data ? '"'.str_replace('"', '""', \App\Support\Csv::sanitize($data->value)).'"' : '';
             }
 
             $csv[] = implode(',', $row);

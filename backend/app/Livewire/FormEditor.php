@@ -135,6 +135,19 @@ class FormEditor extends Component
 
         $this->authorize('update', $this->form);
 
+        // REA: jangan simpan judul kosong — akan melanggar constraint/merusak tampilan.
+        if (trim($this->settingsTitle) === '') {
+            return;
+        }
+
+        // REA: tolak rentang waktu yang tidak valid (akhir sebelum awal).
+        if ($this->settingsStartsAt && $this->settingsEndsAt
+            && strtotime($this->settingsEndsAt) <= strtotime($this->settingsStartsAt)) {
+            $this->dispatch('autosave-error', message: 'Waktu penutupan harus setelah waktu pembukaan.');
+
+            return;
+        }
+
         $this->form->update([
             'title' => $this->settingsTitle ?: $this->form->title,
             'description' => $this->settingsDescription,

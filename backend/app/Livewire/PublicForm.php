@@ -58,6 +58,12 @@ class PublicForm extends Component
             return;
         }
 
+        if ($form->isNotOpenYet()) {
+            $this->error = 'Pengisian formulir ini belum dibuka. Silakan kembali sesuai jadwal.';
+
+            return;
+        }
+
         if ($form->isExpired()) {
             $this->error = 'Form ini sudah tidak menerima jawaban.';
 
@@ -326,6 +332,31 @@ class PublicForm extends Component
             return;
         }
 
+        // REA S-03/S-04/S-05: guardrail diulang saat submit — status/form bisa
+        // berubah selama pengguna mengisi (ditutup, kuota penuh, atau belum dibuka).
+        if (! $this->form->isAcceptingSubmissions()) {
+            $this->error = match (true) {
+                $this->form->isNotOpenYet() => 'Pengisian formulir ini belum dibuka.',
+                $this->form->isExpired() => 'Form ini sudah tidak menerima jawaban.',
+                default => 'Form ini sudah mencapai batas maksimum jawaban.',
+            };
+
+            return;
+        }
+
+        if ($this->form->require_auth && ! Auth::check()) {
+            $this->error = 'Silakan login terlebih dahulu untuk mengisi formulir ini.';
+
+            return;
+        }
+
+        if ($this->form->limit_one_response && Auth::check()
+            && $this->form->submissions()->where('user_id', Auth::id())->exists()) {
+            $this->error = 'Anda sudah pernah mengisi formulir ini.';
+
+            return;
+        }
+
         $this->calculateComputedFields();
 
         $validationRules = [];
@@ -379,35 +410,40 @@ class PublicForm extends Component
 
         $this->validate($validationRules, $validationMessages);
 
-        $submission = FormSubmission::create([
-            'uuid' => Str::uuid(),
-            'form_id' => $this->form->id,
-            'user_id' => Auth::check() ? Auth::id() : null,
-            'ip_address' => $this->form->collect_ip ? request()->ip() : null,
-            'user_agent' => $this->form->collect_ip ? request()->userAgent() : null,
-            'submitted_at' => now(),
-        ]);
-
-        foreach ($this->responses as $fieldId => $value) {
-            $fieldModel = $this->form->fields->firstWhere('id', $fieldId);
-
-            if ($fieldModel && $fieldModel->is_admin_only) {
-                continue;
-            }
-
-            if ($fieldModel && $fieldModel->type->value === 'file' && $value instanceof TemporaryUploadedFile) {
-                $path = $value->store('uploads', 'local');
-                $value = $path;
-            }
-
-            SubmissionData::create([
-                'submission_id' => $submission->id,
-                'form_field_id' => $fieldId,
-                'value' => is_array($value) ? json_encode($value) : (string) $value,
+        // REA: transaksi agar header + detail submission tersimpan konsisten.
+        $submission = \Illuminate\Support\Facades\DB::transaction(function () {
+            $submission = FormSubmission::create([
+                'uuid' => Str::uuid(),
+                'form_id' => $this->form->id,
+                'user_id' => Auth::check() ? Auth::id() : null,
+                'ip_address' => $this->form->collect_ip ? request()->ip() : null,
+                'user_agent' => $this->form->collect_ip ? request()->userAgent() : null,
+                'submitted_at' => now(),
             ]);
-        }
 
-        $this->autoSetPresensiStatus($submission);
+            foreach ($this->responses as $fieldId => $value) {
+                $fieldModel = $this->form->fields->firstWhere('id', $fieldId);
+
+                if ($fieldModel && $fieldModel->is_admin_only) {
+                    continue;
+                }
+
+                if ($fieldModel && $fieldModel->type->value === 'file' && $value instanceof TemporaryUploadedFile) {
+                    $path = $value->store('uploads', 'local');
+                    $value = $path;
+                }
+
+                SubmissionData::create([
+                    'submission_id' => $submission->id,
+                    'form_field_id' => $fieldId,
+                    'value' => is_array($value) ? json_encode($value) : (string) $value,
+                ]);
+            }
+
+            $this->autoSetPresensiStatus($submission);
+
+            return $submission;
+        });
 
         $this->submitted = true;
     }

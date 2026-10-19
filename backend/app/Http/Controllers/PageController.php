@@ -153,9 +153,22 @@ class PageController extends Controller
         $newForm->status = 'draft';
         $newForm->save();
 
+        // Salin section lebih dulu, lalu petakan ulang section_id tiap field
+        // ke section baru agar tidak menunjuk form lama (temuan REA B-04).
+        $sectionMap = [];
+        foreach ($form->sections()->orderBy('order')->get() as $section) {
+            $newSection = $section->replicate(['form_id', 'created_at', 'updated_at']);
+            $newSection->form_id = $newForm->id;
+            $newSection->save();
+            $sectionMap[$section->id] = $newSection->id;
+        }
+
         foreach ($form->fields as $field) {
             $newField = $field->replicate(['form_id', 'created_at', 'updated_at']);
             $newField->form_id = $newForm->id;
+            if ($field->section_id !== null) {
+                $newField->section_id = $sectionMap[$field->section_id] ?? null;
+            }
             $newField->save();
         }
 
@@ -237,7 +250,7 @@ class PageController extends Controller
     public function bulkDeleteSubmissions(Request $request, int $id)
     {
         $form = Form::findOrFail($id);
-        $this->authorize('view', $form);
+        $this->authorize('delete', $form);
 
         $ids = (array) $request->input('ids', []);
         if (empty($ids)) {
@@ -250,7 +263,7 @@ class PageController extends Controller
             $submission->delete();
         }
 
-        AuditService::log('submissions_bulk_deleted', [
+        AuditService::log('submissions_bulk_deleted', $form, "Deleted {$submissions->count()} submissions from form '{$form->title}'", null, [
             'form_id' => $form->id,
             'count' => $submissions->count(),
         ]);
@@ -263,13 +276,15 @@ class PageController extends Controller
     public function deleteSubmission(Request $request, int $formId, int $id)
     {
         $form = Form::findOrFail($formId);
-        $this->authorize('view', $form);
+        $this->authorize('delete', $form);
 
-        $submission = FormSubmission::findOrFail($id);
+        // Wajib di-scope ke form agar tidak bisa menghapus submission form lain
+        // hanya dengan menebak ID (temuan REA S-01 — IDOR).
+        $submission = $form->submissions()->findOrFail($id);
         $submission->data()->delete();
         $submission->delete();
 
-        AuditService::log('submission_deleted', [
+        AuditService::log('submission_deleted', $form, "Submission #{$id} deleted from form '{$form->title}'", null, [
             'form_id' => $form->id,
             'submission_id' => $submission->id,
         ]);
@@ -284,7 +299,8 @@ class PageController extends Controller
         $form = Form::findOrFail($formId);
         $this->authorize('view', $form);
 
-        $submission = FormSubmission::with('data.formField')->findOrFail($id);
+        // Di-scope ke form: mencegah IDOR detail submission lintas form (temuan REA S-01).
+        $submission = $form->submissions()->with('data.formField')->findOrFail($id);
 
         AuditService::log('submission.viewed', $submission, "Submission #{$id} viewed on form '{$form->title}'");
 
@@ -332,7 +348,8 @@ class PageController extends Controller
                     $row = [$submission->uuid, $submission->submitted_at];
                     $data = $submission->data->keyBy('form_field_id');
                     foreach ($fields as $field) {
-                        $row[] = $data->get($field->id)?->value ?? '';
+                        // REA: antisipasi CSV/formula injection pada nilai peserta.
+                        $row[] = \App\Support\Csv::sanitize($data->get($field->id)?->value ?? '');
                     }
                     fputcsv($handle, $row);
                 }

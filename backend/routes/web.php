@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [PageController::class, 'login'])->name('login');
-    Route::post('/login', [WebAuthController::class, 'login']);
+    Route::post('/login', [WebAuthController::class, 'login'])->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');

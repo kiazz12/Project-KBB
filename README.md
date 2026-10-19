@@ -40,7 +40,7 @@ Project KBB dibangun untuk menyediakan:
 ## Fitur Utama
 
 ### Pembuatan Formulir
-- 13 jenis bidang: teks, email, angka, pilihan ganda, radio, checkbox, textarea, tanggal, unggahan file, judul, paragraf, rating, dan matriks
+- 14 jenis bidang: teks, textarea, email, angka, tanggal, waktu, select, radio, checkbox, unggahan file, judul, paragraf, tanda tangan, dan bidang terhitung (`computed`)
 - Editor drag-and-drop berbasis Livewire (`FormEditor`)
 - Pengelompokan bidang dengan **section**
 - Logika bersyarat (menampilkan/menyembunyikan bidang berdasarkan jawaban lain)
@@ -154,11 +154,11 @@ project-kbb/
 │   │   └── Exports/            ← Ekspor Excel
 │   ├── resources/views/        ← Templat Blade + Livewire
 │   ├── routes/                 ← web.php, api.php, admin.php, console.php
-│   ├── database/migrations/    ← 26 migrasi
+│   ├── database/migrations/    ← 27 migrasi
 │   ├── tests/                  ← PHPUnit (Feature + Unit)
 │   └── config/
-├── docs/                       ← Dokumentasi arsitektur & rencana
-└── start.bat                   ← USANG (merujuk frontend/ yang tidak ada; abaikan)
+├── docs/                       ← Dokumentasi arsitektur, rencana & hasil REA
+└── start.bat                   ← Peluncur backend (php artisan serve :8000)
 ```
 
 **Frontend adalah Blade + Livewire** — bukan React. Dokumen lama dan `backend/pnpm-lock.yaml` menyebut React 19 / Inertia SPA yang tidak pernah dibangun; abaikan.
@@ -167,7 +167,7 @@ project-kbb/
 
 ## Basis Data
 
-26 migrasi → 11 model utama:
+27 migrasi → 11 model utama:
 
 | Tabel | Fungsi |
 |-------|--------|
@@ -199,13 +199,13 @@ project-kbb/
 
 Semua perintah dijalankan dari direktori `backend/`.
 
-> **Penting:** repositori ini **tidak menyertakan `.env.example`**. Skrip `composer setup` akan gagal pada langkah menyalin `.env`, jadi buat `.env` secara manual:
+> **Penting:** salin `.env.example` bawaan lalu isi `APP_KEY`:
 
 ```bash
 cd backend
 
-# 1. Buat .env secara manual (tidak ada .env.example untuk disalin)
-cp .env.example .env        # jika tersedia di lingkungan Anda, ATAU buat dari config Laravel:
+# 1. Buat .env dari template bawaan
+cp .env.example .env
 php artisan key:generate
 
 # 2. Atur koneksi database di .env
@@ -263,7 +263,7 @@ php vendor/bin/pint
 
 - PHPUnit 12 dengan **SQLite in-memory** (lihat `phpunit.xml`) — tidak butuh layanan eksternal
 - Isolasi per test dengan `RefreshDatabase`, autentikasi via `actingAs()`
-- 7 berkas test (Feature + Unit) — cakupan masih rendah, lihat `docs/MASTER-TASK-LIST.md`
+- 13 berkas test (Feature + Unit) — cakupan masih rendah, lihat `docs/MASTER-TASK-LIST.md`
 
 ---
 
@@ -277,6 +277,10 @@ Dokumentasi lengkap berada di direktori `docs/`:
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arsitektur, alur data, skema lengkap |
 | [docs/MASTER-TASK-LIST.md](docs/MASTER-TASK-LIST.md) | Daftar tugas & rencana implementasi |
 | [docs/INDEX.md](docs/INDEX.md) | Indeks dokumentasi & roadmap fase |
+| [docs/REA-LAPORAN-ANALISIS.md](docs/REA-LAPORAN-ANALISIS.md) | Laporan utama Reverse Engineering Analysis |
+| [docs/REA-DIAGRAM.md](docs/REA-DIAGRAM.md) | Diagram Mermaid hasil REA (arsitektur, ERD, sequence) |
+| [docs/REA-TEMUAN.md](docs/REA-TEMUAN.md) | Register 30 temuan REA beserta status perbaikan |
+| [docs/REA-LOG-PERBAIKAN.md](docs/REA-LOG-PERBAIKAN.md) | Log perbaikan temuan (before/after) |
 
 ---
 

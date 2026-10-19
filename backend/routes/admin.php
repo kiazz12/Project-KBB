@@ -7,7 +7,7 @@ use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'loginForm'])->name('admin.login');
-Route::post('/login', [AuthController::class, 'login'])->name('admin.login.post');
+Route::post('/login', [AuthController::class, 'login'])->name('admin.login.post')->middleware('throttle:5,1');
 
 Route::middleware(['auth', 'role:super_admin'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');

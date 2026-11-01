@@ -481,7 +481,20 @@ class PageController extends Controller
     {
         $users = User::latest()->paginate(20);
 
-        return view('users.index', compact('users'));
+        $users->through(fn (User $user): array => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'nip' => $user->nip,
+            'opd' => $user->opd,
+            'role' => $user->role->value,
+            'is_super_admin' => $user->isSuperAdmin(),
+            'created_at' => $user->created_at?->format('d/m/Y'),
+        ]);
+
+        return Inertia::render('Users/Index', [
+            'users' => $users,
+        ]);
     }
 
     public function usersShow(int $id)
@@ -489,12 +502,40 @@ class PageController extends Controller
         $user = User::withCount('forms')->findOrFail($id);
         $forms = $user->forms()->withCount(['fields', 'submissions'])->latest()->paginate(15);
 
-        return view('users.show', compact('user', 'forms'));
+        $forms->through(fn (Form $form): array => [
+            'id' => $form->id,
+            'title' => $form->title,
+            'status' => $form->status->value,
+            'status_label' => ucfirst($form->status->value),
+            'fields_count' => $form->fields_count,
+            'submissions_count' => $form->submissions_count,
+            'url' => route('forms.show', $form),
+        ]);
+
+        return Inertia::render('Users/Show', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'nip' => $user->nip,
+                'opd' => $user->opd,
+                'role' => $user->role->value,
+                'is_super_admin' => $user->isSuperAdmin(),
+                'forms_count' => $user->forms_count,
+                'created_at' => $user->created_at?->format('d/m/Y'),
+            ],
+            'forms' => $forms,
+        ]);
     }
 
     public function changePassword()
     {
-        return view('change-password');
+        /** @var User $user */
+        $user = Auth::user();
+
+        return Inertia::render('ChangePassword', [
+            'isSuperAdmin' => $user->isSuperAdmin(),
+        ]);
     }
 
     public function exportCsv(Request $request, int $id): mixed

@@ -2,13 +2,11 @@
 
 namespace App\Livewire;
 
-use App\Enums\FieldType;
 use App\Models\Form;
-use App\Models\FormField;
 use App\Models\FormSubmission;
-use App\Models\Participant;
 use App\Models\SubmissionData;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -33,14 +31,6 @@ class PublicForm extends Component
     public array $steps = [];
 
     public int $totalSteps = 1;
-
-    public string $participantSearch = '';
-
-    public array $participantResults = [];
-
-    public ?int $selectedParticipantId = null;
-
-    public bool $showParticipantSearch = false;
 
     public string $company_website = '';
 
@@ -78,8 +68,6 @@ class PublicForm extends Component
 
         $this->form = $form;
 
-        $this->showParticipantSearch = false;
-
         $sections = $form->sections;
         $noSectionFields = $form->fields->whereNull('section_id');
 
@@ -111,90 +99,6 @@ class PublicForm extends Component
     public function render()
     {
         return view('livewire.public-form');
-    }
-
-    public function updatedParticipantSearch(): void
-    {
-        if (strlen($this->participantSearch) < 2) {
-            $this->participantResults = [];
-
-            return;
-        }
-
-        $this->participantResults = Participant::where('nama', 'like', "%{$this->participantSearch}%")
-            ->limit(20)
-            ->get()
-            ->toArray();
-    }
-
-    public function selectParticipant(int $participantId): void
-    {
-        $participant = Participant::find($participantId);
-        if (! $participant) {
-            return;
-        }
-
-        $this->selectedParticipantId = $participantId;
-
-        $linkedFormId = $this->form->settings['linked_form_id'] ?? null;
-        $presensiData = null;
-
-        if ($linkedFormId) {
-            $linkedSubmission = FormSubmission::where('form_id', $linkedFormId)
-                ->with('data.formField')
-                ->get()
-                ->filter(function ($sub) use ($participant) {
-                    return $sub->data->contains(function ($d) use ($participant) {
-                        return $d->formField && strtolower($d->formField->label) === 'nama lengkap'
-                            && strtolower(trim($d->value)) === strtolower(trim($participant->nama));
-                    });
-                })
-                ->first();
-
-            if ($linkedSubmission) {
-                $presensiData = [];
-                foreach ($linkedSubmission->data as $d) {
-                    if ($d->formField) {
-                        $presensiData[strtolower($d->formField->label)] = $d->value;
-                    }
-                }
-            }
-        }
-
-        foreach ($this->form->fields as $field) {
-            $label = strtolower($field->label);
-
-            if ($presensiData) {
-                if (str_contains($label, 'nama') && ! str_contains($label, 'nik')) {
-                    $this->responses[$field->id] = $presensiData['nama lengkap'] ?? $participant->nama;
-                }
-                if (str_contains($label, 'instansi') || str_contains($label, 'opd')) {
-                    $this->responses[$field->id] = $presensiData['opd / institusi'] ?? $participant->opd_institusi;
-                }
-                if (str_contains($label, 'jabatan')) {
-                    $this->responses[$field->id] = $presensiData['jabatan'] ?? $participant->jabatan;
-                }
-                if (str_contains($label, 'nik') || $label === 'nik') {
-                    $this->responses[$field->id] = $presensiData['no. induk pegawai (nip)'] ?? '';
-                }
-            } else {
-                if (str_contains($label, 'nama') && ! str_contains($label, 'nik')) {
-                    $this->responses[$field->id] = $participant->nama;
-                }
-                if (str_contains($label, 'instansi') || str_contains($label, 'opd')) {
-                    $this->responses[$field->id] = $participant->opd_institusi;
-                }
-                if (str_contains($label, 'jabatan')) {
-                    $this->responses[$field->id] = $participant->jabatan;
-                }
-                if ($label === 'role') {
-                    $this->responses[$field->id] = $participant->role;
-                }
-            }
-        }
-
-        $this->calculateComputedFields();
-        $this->participantResults = [];
     }
 
     public function updatedResponses($value, $key): void
@@ -411,7 +315,7 @@ class PublicForm extends Component
         $this->validate($validationRules, $validationMessages);
 
         // REA: transaksi agar header + detail submission tersimpan konsisten.
-        $submission = \Illuminate\Support\Facades\DB::transaction(function () {
+        DB::transaction(function () {
             $submission = FormSubmission::create([
                 'uuid' => Str::uuid(),
                 'form_id' => $this->form->id,
@@ -439,52 +343,8 @@ class PublicForm extends Component
                     'value' => is_array($value) ? json_encode($value) : (string) $value,
                 ]);
             }
-
-            $this->autoSetPresensiStatus($submission);
-
-            return $submission;
         });
 
         $this->submitted = true;
-    }
-
-    private function isPresensiForm(): bool
-    {
-        return str_contains($this->slug, 'presensi') || str_contains($this->slug, 'transfer-knowledge');
-    }
-
-    private function autoSetPresensiStatus(FormSubmission $submission): void
-    {
-        if (! $this->isPresensiForm()) {
-            return;
-        }
-
-        $statusField = $this->form->fields
-            ->where('label', 'Status Kehadiran')
-            ->first();
-
-        if (! $statusField) {
-            $statusField = FormField::create([
-                'form_id' => $this->form->id,
-                'type' => FieldType::Radio,
-                'label' => 'Status Kehadiran',
-                'options' => ['Hadir', 'Izin', 'Sakit', 'Tanpa Keterangan'],
-                'is_admin_only' => true,
-                'required' => false,
-                'order' => $this->form->fields->max('order') + 1,
-            ]);
-        }
-
-        $existing = SubmissionData::where('submission_id', $submission->id)
-            ->where('form_field_id', $statusField->id)
-            ->first();
-
-        if (! $existing) {
-            SubmissionData::create([
-                'submission_id' => $submission->id,
-                'form_field_id' => $statusField->id,
-                'value' => 'Hadir',
-            ]);
-        }
     }
 }

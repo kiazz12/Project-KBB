@@ -25,7 +25,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
-            if ($user->role->value !== 'super_admin') {
+            if ($user->role?->value !== 'super_admin') {
                 Auth::logout();
 
                 return back()->withErrors(['email' => 'Hanya Super Admin yang dapat mengakses panel ini.']);

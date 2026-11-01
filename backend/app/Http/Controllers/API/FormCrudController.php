@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Form;
 use App\Services\AuditService;
+use App\Support\Csv;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class FormCrudController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Form::withCount(['fields', 'submissions']);
-        if ($request->user()->role->value === 'super_admin') {
+        if ($request->user()->role?->value === 'super_admin') {
             $query->with('user:id,name');
         } else {
             $query->where('user_id', $request->user()->id);
@@ -297,7 +298,7 @@ class FormCrudController extends Controller
                     $data = $submission->data->keyBy('form_field_id');
                     foreach ($fields as $field) {
                         // REA: antisipasi CSV/formula injection pada nilai peserta.
-                        $row[] = \App\Support\Csv::sanitize($data->get($field->id)?->value ?? '');
+                        $row[] = Csv::sanitize($data->get($field->id)?->value ?? '');
                     }
                     fputcsv($handle, $row);
                 }

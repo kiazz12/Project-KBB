@@ -9,6 +9,7 @@ use App\Models\SubmissionData;
 use App\Models\User;
 use App\Services\AuditService;
 use App\Services\NotificationService;
+use App\Support\Csv;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -349,7 +350,7 @@ class PageController extends Controller
                     $data = $submission->data->keyBy('form_field_id');
                     foreach ($fields as $field) {
                         // REA: antisipasi CSV/formula injection pada nilai peserta.
-                        $row[] = \App\Support\Csv::sanitize($data->get($field->id)?->value ?? '');
+                        $row[] = Csv::sanitize($data->get($field->id)?->value ?? '');
                     }
                     fputcsv($handle, $row);
                 }
@@ -423,50 +424,6 @@ class PageController extends Controller
         NotificationService::notifySuperAdmins('data_exported', "mengunduh data uang saku form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'uang_saku_pdf']);
 
         return $pdf->download('tanda-terima-uang-saku-peserta.pdf');
-    }
-
-    public function exportPresensiPdf(Request $request, int $id): mixed
-    {
-        ini_set('memory_limit', '2G');
-
-        $form = Form::findOrFail($id);
-        $this->authorize('view', $form);
-
-        $fields = $form->fields()->orderBy('order')->get();
-
-        $submissionIds = $form->submissions()->orderBy('id')->pluck('id');
-
-        $submissionDataMap = [];
-        SubmissionData::whereIn('submission_id', $submissionIds)
-            ->with('formField')
-            ->orderBy('submission_id')
-            ->chunk(2000, function ($chunk) use (&$submissionDataMap) {
-                foreach ($chunk as $data) {
-                    if ($data->formField) {
-                        $submissionDataMap[$data->submission_id][] = $data;
-                    }
-                }
-            });
-
-        $submissions = [];
-        foreach ($submissionIds as $sid) {
-            if (isset($submissionDataMap[$sid])) {
-                $submissions[] = (object) ['id' => $sid, 'data' => collect($submissionDataMap[$sid])];
-            }
-        }
-
-        $pdf = Pdf::loadView('exports.presensi-pdf', [
-            'form' => $form,
-            'fields' => $fields,
-            'submissions' => $submissions,
-            'showFooter' => true,
-            'offset' => 0,
-        ])->setPaper('a4', 'landscape');
-
-        AuditService::log('export.presensi', $form, "Form '{$form->title}' presensi exported as PDF");
-        NotificationService::notifySuperAdmins('data_exported', "mengunduh data presensi form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'presensi_pdf']);
-
-        return $pdf->download('daftar-hadir-presensi.pdf');
     }
 
     public function publicForm(string $slug)

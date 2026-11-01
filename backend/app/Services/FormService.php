@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Form;
+use App\Support\Csv;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class FormService
     {
         $query = Form::withCount(['fields', 'submissions']);
 
-        if ($user->role->value !== 'super_admin') {
+        if ($user->role?->value !== 'super_admin') {
             $query->where('user_id', $user->id);
         } else {
             $query->with('user:id,name');
@@ -191,7 +192,7 @@ class FormService
                     $data = $submission->data->keyBy('form_field_id');
                     foreach ($fields as $field) {
                         // REA: antisipasi CSV/formula injection pada nilai peserta.
-                        $row[] = \App\Support\Csv::sanitize($data->get($field->id)?->value ?? '');
+                        $row[] = Csv::sanitize($data->get($field->id)?->value ?? '');
                     }
                     fputcsv($handle, $row);
                 }

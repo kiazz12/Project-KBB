@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * REA D-12: indeks performa untuk query yang terbukti lambat pada volume data
- * besar (analisis REA — lihat docs/REA-TEMUAN.md).
+ * besar (analisis REA; lihat dokumentasi REA di luar repositori).
  *
  * Semua penambahan indeks dibuat idempoten lewat hasIndex() agar aman
  * dijalankan pada database yang sudah punya indeks serupa.
@@ -48,14 +48,6 @@ return new class extends Migration
             // Hitung sesi aktif user (WHERE user_id AND logged_out_at IS NULL).
             $this->addIndex($table, ['user_id', 'logged_out_at'], 'user_sessions_user_id_logged_out_at_index');
         });
-
-        Schema::table('participants', function (Blueprint $table) {
-            // Pencarian peserta LIKE '%...%' pada nama.
-            if (Schema::hasColumn('participants', 'nama')
-                && ! Schema::hasIndex('participants', ['nama'])) {
-                $table->index('nama', 'participants_nama_index');
-            }
-        });
     }
 
     public function down(): void
@@ -78,10 +70,6 @@ return new class extends Migration
 
         Schema::table('user_sessions', function (Blueprint $table) {
             $table->dropIndex('user_sessions_user_id_logged_out_at_index');
-        });
-
-        Schema::table('participants', function (Blueprint $table) {
-            $table->dropIndex('participants_nama_index');
         });
     }
 };

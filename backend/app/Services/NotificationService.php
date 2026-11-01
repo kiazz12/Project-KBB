@@ -29,7 +29,7 @@ class NotificationService
                     'actor_id' => $user->id,
                     'actor_name' => $displayName,
                     'actor_email' => $user->email,
-                    'actor_role' => $user->role->value,
+                    'actor_role' => $user->role?->value,
                 ]),
             ]));
     }

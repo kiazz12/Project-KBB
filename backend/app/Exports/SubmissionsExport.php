@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class SubmissionsExport implements FromCollection, WithColumnWidths, WithHeadings, WithStyles
@@ -52,7 +53,13 @@ class SubmissionsExport implements FromCollection, WithColumnWidths, WithHeading
     public function styles(Worksheet $sheet): array
     {
         return [
-            1 => ['font' => ['bold' => true], 'fill' => ['fillType' => 'solid', 'startColor' => '1E3A8A']],
+            1 => [
+                'font' => ['bold' => true],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FF1E3A8A'],
+                ],
+            ],
         ];
     }
 }

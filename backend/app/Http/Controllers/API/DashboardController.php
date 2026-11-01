@@ -12,7 +12,7 @@ class DashboardController extends Controller
 {
     public function stats(Request $request): JsonResponse
     {
-        $isSuper = $request->user()->role->value === 'super_admin';
+        $isSuper = $request->user()->role?->value === 'super_admin';
         $userId = $request->user()->id;
 
         $formIds = $isSuper ? Form::select('id') : Form::where('user_id', $userId)->select('id');
@@ -40,7 +40,7 @@ class DashboardController extends Controller
     public function recentForms(Request $request): JsonResponse
     {
         $query = Form::withCount(['fields', 'submissions']);
-        if ($request->user()->role->value === 'super_admin') {
+        if ($request->user()->role?->value === 'super_admin') {
             $query->with('user:id,name');
         } else {
             $query->where('user_id', $request->user()->id);

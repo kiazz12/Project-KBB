@@ -9,9 +9,7 @@ class SessionLimitService
 {
     public static function canLogin(User $user): bool
     {
-        $count = DB::table('sessions')
-            ->where('user_id', $user->id)
-            ->count();
+        $count = static::activeSessions($user)->count();
 
         if ($user->isSuperAdmin()) {
             return $count === 0;
@@ -30,8 +28,7 @@ class SessionLimitService
         $currentSessionId = session()->getId();
         $deletedCount = 0;
 
-        $userSessions = DB::table('sessions')
-            ->where('user_id', $user->id)
+        $userSessions = static::activeSessions($user)
             ->orderBy('last_activity', 'desc')
             ->get();
 
@@ -76,5 +73,19 @@ class SessionLimitService
         $user->tokens()->whereIn('id', $toDelete->pluck('id'))->delete();
 
         return $count;
+    }
+
+    /**
+     * Only sessions that have not passed the configured session lifetime are
+     * considered active. Expired rows are ignored so they cannot lock a user
+     * out after the cookie has been lost.
+     */
+    protected static function activeSessions(User $user)
+    {
+        $activeSince = now()->subMinutes((int) config('session.lifetime'))->timestamp;
+
+        return DB::table('sessions')
+            ->where('user_id', $user->id)
+            ->where('last_activity', '>=', $activeSince);
     }
 }

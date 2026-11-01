@@ -31,7 +31,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/forms/{form}/export/xlsx', [PageController::class, 'exportXlsx'])->name('forms.export.xlsx')->whereNumber('form');
     Route::get('/forms/{form}/export/pdf', [PageController::class, 'exportPdf'])->name('forms.export.pdf')->whereNumber('form');
     Route::get('/forms/{form}/export/uang-saku', [PageController::class, 'exportUangSakuPdf'])->name('forms.export.uang-saku')->whereNumber('form');
-    Route::get('/forms/{form}/export/presensi', [PageController::class, 'exportPresensiPdf'])->name('forms.export.presensi')->whereNumber('form');
     Route::get('/users', [PageController::class, 'usersIndex'])->name('users.index')->middleware('role:super_admin');
     Route::get('/users/{user}', [PageController::class, 'usersShow'])->name('users.show')->middleware('role:super_admin')->whereNumber('user');
     Route::get('/change-password', [PageController::class, 'changePassword'])->name('change-password');

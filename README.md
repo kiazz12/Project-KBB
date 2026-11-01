@@ -50,13 +50,12 @@ Project KBB dibangun untuk menyediakan:
 ### Formulir Publik
 - Dapat diakses tanpa login melalui `/form/{slug}`
 - Validasi real-time via Livewire
-- Pencarian peserta otomatis dari tabel `participants`
 - Proteksi double-submit, halaman/URL konfirmasi setelah mengirim
 - Perekaman IP & User-Agent hanya jika diaktifkan (`collect_ip`)
 
 ### Pengelolaan Data & Ekspor
 - Daftar pengumpulan data dengan paginasi, detail per bidang, dan penghapusan
-- Ekspor **CSV** (Maatwebsite Excel), **PDF** (DOMPDF), serta format khusus **Uang Saku** dan **Presensi** (FPDF)
+- Ekspor **CSV**, **XLSX/Excel** (Maatwebsite Excel), dan **PDF** (DOMPDF), serta format khusus **Uang Saku**
 - Ekspor **diblokir** untuk formulir berklasifikasi **sensitive**
 
 ### Dashboard & Analitik
@@ -87,7 +86,7 @@ Project KBB dibangun untuk menyediakan:
 | Gaya | Tailwind CSS (via CDN, tanpa build step) |
 | Grafik | Chart.js 4 (via CDN) |
 | Auth API | Laravel Sanctum 4 |
-| Ekspor | Maatwebsite Excel, DOMPDF, FPDF |
+| Ekspor | Maatwebsite Excel, DOMPDF |
 | Basis Data | MySQL (produksi) / SQLite in-memory (testing) |
 | Pengujian | PHPUnit 12 |
 | Gaya Kode | Laravel Pint |
@@ -111,7 +110,7 @@ Satu aplikasi Laravel yang kodenya diorganisasi berdasarkan **domain bisnis**, b
 | Reporting | `ReportingService` | Dashboard, statistik, ekspor |
 | Audit | `AuditDomainService` | Pencatatan aktivitas |
 
-> **Catatan (hutang teknis):** layanan domain sudah ada tetapi **belum dipakai controller**. Controller masih memakai Eloquent langsung + `App\Services\AuditService`. Lihat `docs/MASTER-TASK-LIST.md`.
+> **Catatan (hutang teknis):** layanan domain sudah ada tetapi **belum dipakai controller**. Controller masih memakai Eloquent langsung + `App\Services\AuditService`.
 
 ### Tiga Sistem Autentikasi Paralel
 
@@ -147,7 +146,7 @@ project-kbb/
 │   │   ├── Domains/            ← 6 layanan domain
 │   │   ├── Http/Controllers/   ← Web, API, Admin
 │   │   ├── Livewire/           ← 7 komponen Livewire
-│   │   ├── Models/             ← 11 model Eloquent
+│   │   ├── Models/             ← 10 model Eloquent
 │   │   ├── Services/           ← 5 layanan aplikasi (Audit, Notification, SessionLimit, Form, Submission)
 │   │   ├── Enums/              ← UserRole, FormStatus, FieldType, DataClassification
 │   │   ├── Policies/           ← FormPolicy
@@ -157,8 +156,7 @@ project-kbb/
 │   ├── database/migrations/    ← 27 migrasi
 │   ├── tests/                  ← PHPUnit (Feature + Unit)
 │   └── config/
-├── docs/                       ← Dokumentasi arsitektur, rencana & hasil REA
-└── start.bat                   ← Peluncur backend (php artisan serve :8000)
+└── README.md
 ```
 
 **Frontend adalah Blade + Livewire** — bukan React. Dokumen lama dan `backend/pnpm-lock.yaml` menyebut React 19 / Inertia SPA yang tidak pernah dibangun; abaikan.
@@ -167,7 +165,7 @@ project-kbb/
 
 ## Basis Data
 
-27 migrasi → 11 model utama:
+27 migrasi → 10 model utama:
 
 | Tabel | Fungsi |
 |-------|--------|
@@ -180,7 +178,6 @@ project-kbb/
 | `submission_data` | Nilai jawaban per bidang |
 | `audit_logs` | Catatan aktivitas (old/new values) |
 | `notifications` | Notifikasi pengguna |
-| `participants` | Data peserta (autocomplete) |
 | `user_sessions` | Pelacakan sesi aktif |
 
 ---
@@ -263,24 +260,13 @@ php vendor/bin/pint
 
 - PHPUnit 12 dengan **SQLite in-memory** (lihat `phpunit.xml`) — tidak butuh layanan eksternal
 - Isolasi per test dengan `RefreshDatabase`, autentikasi via `actingAs()`
-- 13 berkas test (Feature + Unit) — cakupan masih rendah, lihat `docs/MASTER-TASK-LIST.md`
+- 13 berkas test (Feature + Unit) — cakupan masih rendah
 
 ---
 
 ## Dokumentasi
 
-Dokumentasi lengkap berada di direktori `docs/`:
-
-| Dokumen | Isi |
-|---------|-----|
-| [docs/PROJECT-OVERVIEW.md](docs/PROJECT-OVERVIEW.md) | Gambaran umum proyek, fitur, skema basis data |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arsitektur, alur data, skema lengkap |
-| [docs/MASTER-TASK-LIST.md](docs/MASTER-TASK-LIST.md) | Daftar tugas & rencana implementasi |
-| [docs/INDEX.md](docs/INDEX.md) | Indeks dokumentasi & roadmap fase |
-| [docs/REA-LAPORAN-ANALISIS.md](docs/REA-LAPORAN-ANALISIS.md) | Laporan utama Reverse Engineering Analysis |
-| [docs/REA-DIAGRAM.md](docs/REA-DIAGRAM.md) | Diagram Mermaid hasil REA (arsitektur, ERD, sequence) |
-| [docs/REA-TEMUAN.md](docs/REA-TEMUAN.md) | Register 30 temuan REA beserta status perbaikan |
-| [docs/REA-LOG-PERBAIKAN.md](docs/REA-LOG-PERBAIKAN.md) | Log perbaikan temuan (before/after) |
+Dokumentasi teknis tidak lagi disertakan di dalam repositori. Dokumentasi arsitektur, laporan REA, dan daftar tugas dipindahkan ke `C:\Users\Acer\Downloads\docs`.
 
 ---
 

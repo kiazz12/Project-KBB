@@ -248,7 +248,14 @@ class PageController extends Controller
 
         AuditService::log('forms.viewed', null, 'Forms list viewed');
 
-        return view('forms.index', compact('forms'));
+        return Inertia::render('Forms/Index', [
+            'forms' => $forms,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+            ],
+            'isSuperAdmin' => $isSuper,
+        ]);
     }
 
     public function formsCreate()
@@ -265,7 +272,35 @@ class PageController extends Controller
 
         AuditService::log('form.viewed', $form, "Form '{$form->title}' viewed");
 
-        return view('forms.show', compact('form'));
+        return Inertia::render('Forms/Show', [
+            'form' => [
+                'id' => $form->id,
+                'title' => $form->title,
+                'description' => $form->description,
+                'slug' => $form->slug,
+                'status' => $form->status->value,
+                'status_label' => ucfirst($form->status->value),
+                'max_submissions' => $form->max_submissions,
+                'ends_at' => $form->ends_at?->format('d/m/Y'),
+                'trashed' => $form->trashed(),
+                'public_url' => url('/form/'.$form->slug),
+                'exports' => [
+                    'csv' => route('forms.export.csv', $form),
+                    'xlsx' => route('forms.export.xlsx', $form),
+                    'pdf' => route('forms.export.pdf', $form),
+                ],
+                'fields_count' => $form->fields_count,
+                'submissions_count' => $form->submissions_count,
+                'sections_count' => $form->sections_count,
+                'fields' => $form->fields->map(fn ($field): array => [
+                    'id' => $field->id,
+                    'type' => $field->type->value,
+                    'label' => $field->label,
+                    'required' => (bool) $field->required,
+                    'order' => $field->order,
+                ])->values(),
+            ],
+        ]);
     }
 
     public function formsEdit(int $id)

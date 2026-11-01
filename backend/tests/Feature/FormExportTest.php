@@ -7,6 +7,7 @@ use App\Models\FormField;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class FormExportTest extends TestCase
@@ -20,6 +21,8 @@ class FormExportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->withoutVite();
 
         $this->owner = User::factory()->create();
 
@@ -45,8 +48,10 @@ class FormExportTest extends TestCase
         $response = $this->actingAs($this->owner)->get("/forms/{$this->form->id}");
 
         $response->assertOk();
-        $response->assertSee('Download Excel (XLSX)');
-        $response->assertSee(route('forms.export.xlsx', $this->form), false);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Forms/Show')
+            ->where('form.exports.xlsx', route('forms.export.xlsx', $this->form))
+        );
     }
 
     public function test_xlsx_export_streams_spreadsheet(): void

@@ -7,6 +7,7 @@ use App\Models\Form;
 use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -22,10 +23,10 @@ class AuditServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $form = Form::create([
-            'uuid' => \Illuminate\Support\Str::uuid(),
+            'uuid' => Str::uuid(),
             'user_id' => $user->id,
             'title' => 'Form Audit',
-            'slug' => 'form-audit-'.\Illuminate\Support\Str::random(6),
+            'slug' => 'form-audit-'.Str::random(6),
             'status' => 'draft',
         ]);
 

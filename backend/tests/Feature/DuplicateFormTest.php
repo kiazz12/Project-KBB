@@ -7,6 +7,8 @@ use App\Models\FormField;
 use App\Models\FormSection;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 /**
@@ -29,10 +31,10 @@ class DuplicateFormTest extends TestCase
         $this->owner = User::factory()->create();
 
         $this->form = Form::create([
-            'uuid' => \Illuminate\Support\Str::uuid(),
+            'uuid' => Str::uuid(),
             'user_id' => $this->owner->id,
             'title' => 'Form Asal',
-            'slug' => 'form-asal-'.\Illuminate\Support\Str::random(6),
+            'slug' => 'form-asal-'.Str::random(6),
             'status' => 'published',
         ]);
 
@@ -95,7 +97,7 @@ class DuplicateFormTest extends TestCase
 
     public function test_api_duplicate_remaps_sections_to_new_form(): void
     {
-        \Laravel\Sanctum\Sanctum::actingAs($this->owner);
+        Sanctum::actingAs($this->owner);
 
         $response = $this->postJson("/api/v1/forms/{$this->form->id}/duplicate");
         $response->assertCreated();

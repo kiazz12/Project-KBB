@@ -5,6 +5,7 @@ namespace App\Domains\Reporting\Services;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\User;
+use App\Support\Csv;
 use Illuminate\Support\Collection;
 
 class ReportingService
@@ -96,7 +97,7 @@ class ReportingService
             foreach ($fields as $field) {
                 $data = $submission->data()->where('form_field_id', $field->id)->first();
                 // REA: antisipasi CSV/formula injection pada nilai peserta.
-                $row[] = $data ? '"'.str_replace('"', '""', \App\Support\Csv::sanitize($data->value)).'"' : '';
+                $row[] = $data ? '"'.str_replace('"', '""', Csv::sanitize($data->value)).'"' : '';
             }
 
             $csv[] = implode(',', $row);

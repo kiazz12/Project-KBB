@@ -6,6 +6,7 @@ use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -33,23 +34,23 @@ class SubmissionOwnershipTest extends TestCase
         $this->owner = User::factory()->create();
 
         $this->formA = Form::create([
-            'uuid' => \Illuminate\Support\Str::uuid(),
+            'uuid' => Str::uuid(),
             'user_id' => $this->owner->id,
             'title' => 'Form A',
-            'slug' => 'form-a-'.\Illuminate\Support\Str::random(6),
+            'slug' => 'form-a-'.Str::random(6),
             'status' => 'published',
         ]);
 
         $this->formB = Form::create([
-            'uuid' => \Illuminate\Support\Str::uuid(),
+            'uuid' => Str::uuid(),
             'user_id' => $this->owner->id,
             'title' => 'Form B',
-            'slug' => 'form-b-'.\Illuminate\Support\Str::random(6),
+            'slug' => 'form-b-'.Str::random(6),
             'status' => 'published',
         ]);
 
         $this->submissionB = FormSubmission::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'form_id' => $this->formB->id,
             'user_id' => $this->owner->id,
             'submitted_at' => now(),

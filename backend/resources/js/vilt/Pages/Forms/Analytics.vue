@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
-import AppLayout from '../../Layouts/AppLayout.vue';
+import RoleLayout from '../../Layouts/RoleLayout.vue';
 
 const props = defineProps({
     form: { type: Object, required: true },
@@ -23,7 +23,7 @@ const barHeights = computed(() => {
 <template>
     <Head :title="`Analisis: ${form.title}`" />
 
-    <AppLayout>
+    <RoleLayout>
         <template #title>
             <div class="flex items-center gap-3">
                 <Link :href="`/forms/${form.id}`" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -136,5 +136,5 @@ const barHeights = computed(() => {
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </RoleLayout>
 </template>

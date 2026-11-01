@@ -1,6 +1,6 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
-import AppLayout from '../Layouts/AppLayout.vue';
+import RoleLayout from '../Layouts/RoleLayout.vue';
 
 defineProps({
     isSuperAdmin: { type: Boolean, default: false },
@@ -23,7 +23,7 @@ function submit() {
 <template>
     <Head title="Ubah Password" />
 
-    <AppLayout>
+    <RoleLayout>
         <template #title>Ubah Password</template>
 
         <div class="mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-kbb-700 via-kbb-800 to-[#001a3a] p-6 text-white shadow-2xl sm:p-8">
@@ -102,5 +102,5 @@ function submit() {
                 </form>
             </div>
         </div>
-    </AppLayout>
+    </RoleLayout>
 </template>

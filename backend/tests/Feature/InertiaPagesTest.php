@@ -302,7 +302,6 @@ class InertiaPagesTest extends TestCase
 
         $this->actingAs($admin)->get('/admin')->assertForbidden();
         $this->actingAs($admin)->get('/admin/users')->assertForbidden();
-        $this->actingAs($admin)->get('/admin/forms')->assertForbidden();
     }
 
     public function test_admin_users_pages_render_inertia_components(): void
@@ -340,36 +339,41 @@ class InertiaPagesTest extends TestCase
             );
     }
 
-    public function test_admin_forms_pages_render_inertia_components(): void
+    public function test_super_admin_is_redirected_from_dashboard_to_admin_panel(): void
     {
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
 
-        $form = Form::create([
+        $this->actingAs($superAdmin)->get('/dashboard')->assertRedirect('/admin');
+    }
+
+    public function test_super_admin_sees_all_forms_in_the_single_forms_page(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $admin = User::factory()->create(['name' => 'Pemilik Form']);
+
+        Form::create([
             'uuid' => (string) Str::uuid(),
-            'user_id' => $superAdmin->id,
-            'title' => 'Form Admin Panel',
-            'slug' => 'form-admin-panel',
+            'user_id' => $admin->id,
+            'title' => 'Form Milik Admin Lain',
+            'slug' => 'form-milik-admin-lain',
             'status' => FormStatus::Published,
         ]);
 
-        $this->actingAs($superAdmin)->get('/admin/forms')
+        $this->actingAs($superAdmin)->get('/forms')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Forms/Index')
+                ->component('Forms/Index')
+                ->where('isSuperAdmin', true)
                 ->has('forms.data', 1)
-                ->where('forms.data.0.title', 'Form Admin Panel')
-                ->where('forms.data.0.status', 'published')
-                ->where('forms.data.0.owner', $superAdmin->name)
+                ->where('forms.data.0.title', 'Form Milik Admin Lain')
+                ->where('forms.data.0.user.name', 'Pemilik Form')
             );
+    }
 
-        $this->actingAs($superAdmin)->get("/admin/forms/{$form->id}")
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Forms/Show')
-                ->where('form.title', 'Form Admin Panel')
-                ->where('form.owner', $superAdmin->name)
-                ->where('form.status', 'published')
-                ->has('submissions.data', 0)
-            );
+    public function test_duplicate_admin_forms_panel_route_has_been_removed(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $this->actingAs($superAdmin)->get('/admin/forms')->assertNotFound();
     }
 }

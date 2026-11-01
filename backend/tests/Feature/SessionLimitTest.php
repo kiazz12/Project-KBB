@@ -32,7 +32,7 @@ class SessionLimitTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect('/admin');
         $this->assertAuthenticatedAs($user);
     }
 

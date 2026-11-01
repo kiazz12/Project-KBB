@@ -38,7 +38,7 @@ class DashboardController extends Controller
                 'status' => $form->status->value,
                 'status_label' => ucfirst($form->status->value),
                 'submissions_count' => $form->submissions_count ?? 0,
-                'url' => route('admin.forms.show', $form),
+                'url' => route('forms.show', $form),
             ])->values(),
             'usersByRole' => $usersByRole->map(function ($item): array {
                 $role = $item->role instanceof UserRole ? $item->role->value : (string) $item->role;

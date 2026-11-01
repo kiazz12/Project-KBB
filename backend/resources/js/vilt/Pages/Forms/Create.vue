@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AppLayout from '../../Layouts/AppLayout.vue';
+import RoleLayout from '../../Layouts/RoleLayout.vue';
 
 const form = useForm({
     title: '',
@@ -15,7 +15,7 @@ function submit() {
 <template>
     <Head title="Buat Form Baru" />
 
-    <AppLayout>
+    <RoleLayout>
         <template #title>Buat Formulir Baru</template>
 
         <div class="mx-auto max-w-2xl">
@@ -93,5 +93,5 @@ function submit() {
                 </form>
             </div>
         </div>
-    </AppLayout>
+    </RoleLayout>
 </template>

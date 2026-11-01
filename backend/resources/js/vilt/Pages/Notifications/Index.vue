@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import AppLayout from '../../Layouts/AppLayout.vue';
+import RoleLayout from '../../Layouts/RoleLayout.vue';
 
 const props = defineProps({
     notifications: { type: Object, required: true },
@@ -26,7 +26,7 @@ function paginationLabel(label) {
 <template>
     <Head title="Notifikasi" />
 
-    <AppLayout>
+    <RoleLayout>
         <template #title>Notifikasi</template>
 
         <div class="mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-kbb-700 via-kbb-800 to-[#001a3a] p-6 text-white shadow-2xl sm:p-8">
@@ -123,5 +123,5 @@ function paginationLabel(label) {
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </RoleLayout>
 </template>

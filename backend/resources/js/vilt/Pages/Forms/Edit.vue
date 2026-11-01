@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import AppLayout from '../../Layouts/AppLayout.vue';
+import RoleLayout from '../../Layouts/RoleLayout.vue';
 
 const props = defineProps({
     form: { type: Object, required: true },
@@ -315,7 +315,7 @@ const qrCodeUrl = computed(() => {
 <template>
     <Head :title="`Editor: ${form.title}`" />
 
-    <AppLayout>
+    <RoleLayout>
         <template #title>
             <div class="flex items-center gap-3">
                 <Link href="/forms" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -1018,5 +1018,5 @@ const qrCodeUrl = computed(() => {
                 </button>
             </div>
         </div>
-    </AppLayout>
+    </RoleLayout>
 </template>

@@ -53,7 +53,7 @@ class WebAuthController extends Controller
 
             AuditService::log('auth.login', $user, "User '{$user->name}' logged in");
 
-            return redirect()->intended('/dashboard');
+            return redirect()->intended($user->isSuperAdmin() ? route('admin.dashboard') : route('dashboard'));
         }
 
         return back()->withErrors([

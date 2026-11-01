@@ -13,7 +13,6 @@ use App\Models\UserSession;
 use App\Services\AuditService;
 use App\Services\NotificationService;
 use App\Support\Csv;
-use App\Support\InertiaForm;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -28,7 +27,7 @@ class PageController extends Controller
     public function login()
     {
         if (Auth::check()) {
-            return redirect('/dashboard');
+            return redirect(Auth::user()->isSuperAdmin() ? route('admin.dashboard') : route('dashboard'));
         }
 
         return Inertia::render('Login');
@@ -38,6 +37,11 @@ class PageController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+
+        if ($user->isSuperAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         $isSuper = $user->isSuperAdmin();
         $userId = Auth::id();
 

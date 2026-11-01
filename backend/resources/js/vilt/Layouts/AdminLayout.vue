@@ -62,10 +62,10 @@ function isActive(prefix) {
 
 const navItems = computed(() => [
     { label: 'Dashboard', href: '/admin', active: isDashboardActive(), icon: 'home' },
-    { label: 'Users', href: '/admin/users', active: isActive('/admin/users'), icon: 'users' },
-    { label: 'Forms', href: '/admin/forms', active: isActive('/admin/forms'), icon: 'document' },
+    { label: 'Forms', href: '/forms', active: isActive('/forms'), icon: 'document' },
+    { label: 'Users', href: '/admin/users', active: isActive('/admin/users') || isActive('/users'), icon: 'users' },
     { label: 'Notifikasi', href: '/notifications', active: isActive('/notifications'), icon: 'bell' },
-    { label: 'Kembali ke Dashboard', href: '/dashboard', active: false, icon: 'arrow-left' },
+    { label: 'Ubah Password', href: '/change-password', active: isActive('/change-password'), icon: 'key' },
 ]);
 
 const icons = {
@@ -73,7 +73,7 @@ const icons = {
     users: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z',
     document: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
     bell: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
-    'arrow-left': 'M10 19l-7-7m0 0l7-7m-7 7h18',
+    key: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
 };
 
 const dark = ref(false);

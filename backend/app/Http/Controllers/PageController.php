@@ -406,26 +406,6 @@ class PageController extends Controller
         return $pdf->download("{$form->slug}-submissions.pdf");
     }
 
-    public function exportUangSakuPdf(Request $request, int $id): mixed
-    {
-        $form = Form::findOrFail($id);
-        $this->authorize('view', $form);
-
-        $fields = $form->fields()->orderBy('order')->get();
-        $submissions = $form->submissions()->with('data.formField')->latest()->get();
-
-        $pdf = Pdf::loadView('exports.uang-saku-pdf', [
-            'form' => $form,
-            'fields' => $fields,
-            'submissions' => $submissions,
-        ]);
-
-        AuditService::log('export.uang_saku', $form, "Form '{$form->title}' uang saku exported as PDF");
-        NotificationService::notifySuperAdmins('data_exported', "mengunduh data uang saku form \"{$form->title}\".", ['form_id' => $form->id, 'form_title' => $form->title, 'format' => 'uang_saku_pdf']);
-
-        return $pdf->download('tanda-terima-uang-saku-peserta.pdf');
-    }
-
     public function publicForm(string $slug)
     {
         return view('public-form', compact('slug'));

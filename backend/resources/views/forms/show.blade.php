@@ -85,9 +85,6 @@
                 <a href="{{ route('forms.export.csv', $form) }}" class="block w-full text-center bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition">Download CSV</a>
                 <a href="{{ route('forms.export.xlsx', $form) }}" class="block w-full text-center bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition">Download Excel (XLSX)</a>
                 <a href="{{ route('forms.export.pdf', $form) }}" class="block w-full text-center bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-medium px-4 py-2 rounded-lg transition">Download PDF</a>
-                @if(str_contains($form->slug, 'uang-saku'))
-                    <a href="{{ route('forms.export.uang-saku', $form) }}" class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">Download Tanda Terima</a>
-                @endif
             </div>
         </div>
 

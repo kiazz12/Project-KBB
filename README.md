@@ -55,7 +55,7 @@ Project KBB dibangun untuk menyediakan:
 
 ### Pengelolaan Data & Ekspor
 - Daftar pengumpulan data dengan paginasi, detail per bidang, dan penghapusan
-- Ekspor **CSV**, **XLSX/Excel** (Maatwebsite Excel), dan **PDF** (DOMPDF), serta format khusus **Uang Saku**
+- Ekspor **CSV**, **XLSX/Excel** (Maatwebsite Excel), dan **PDF** (DOMPDF)
 - Ekspor **diblokir** untuk formulir berklasifikasi **sensitive**
 
 ### Dashboard & Analitik

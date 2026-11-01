@@ -65,20 +65,14 @@ class WebAuthController extends Controller
     {
         $user = $request->user();
 
-        $rules = [
+        // REA S-06: password lama wajib untuk semua peran, termasuk Super Admin.
+        $request->validate([
+            'current_password' => 'required|string',
             'new_password' => 'required|string|min:8|confirmed',
-        ];
+        ]);
 
-        if (! $user->isSuperAdmin()) {
-            $rules['current_password'] = 'required|string';
-        }
-
-        $request->validate($rules);
-
-        if (! $user->isSuperAdmin()) {
-            if (! Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'Password saat ini tidak sesuai.']);
-            }
+        if (! Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Password saat ini tidak sesuai.']);
         }
 
         $user->update(['password' => Hash::make($request->new_password)]);

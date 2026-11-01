@@ -32,6 +32,8 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
         SessionLimitService::limitTokens($user);
 
+        AuditService::log('auth.login', $user, "User '{$user->name}' logged in via API");
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -44,7 +46,11 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()?->delete();
+        $user = $request->user();
+
+        $user->currentAccessToken()?->delete();
+
+        AuditService::log('auth.logout', $user, "User '{$user?->name}' logged out via API");
 
         return response()->json([
             'success' => true,

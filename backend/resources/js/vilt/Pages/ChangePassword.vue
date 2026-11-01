@@ -40,7 +40,7 @@ function submit() {
         <div class="max-w-lg">
             <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <form class="space-y-4" @submit.prevent="submit">
-                    <div v-if="!isSuperAdmin">
+                    <div>
                         <label for="current_password" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Password Saat Ini
                         </label>

@@ -77,12 +77,27 @@ Route::get('/uploads/{path}', function (string $path) {
     $fullPath = storage_path('app/private/'.$valueInDb);
     abort_if(! file_exists($fullPath), 404);
 
+    // REA S-08: pastikan path hasil resolve tetap berada di folder uploads.
+    $uploadsRoot = realpath(storage_path('app/private/uploads'));
+    $resolvedPath = realpath($fullPath);
+    abort_if(
+        ! $uploadsRoot
+        || ! $resolvedPath
+        || ! str_starts_with(strtolower($resolvedPath), strtolower($uploadsRoot.DIRECTORY_SEPARATOR)),
+        404
+    );
+
     $form = $submissionData->submission->form;
     /** @var User $user */
     $user = Auth::user();
     abort_if(Auth::id() !== $form->user_id && ! $user->isSuperAdmin(), 403);
 
-    return response()->file($fullPath);
+    // REA S-09: jangan biarkan peramban menebak tipe berkas atau menampilkannya
+    // inline; paksa unduhan dengan nosniff.
+    return response()->file($resolvedPath, [
+        'X-Content-Type-Options' => 'nosniff',
+        'Content-Disposition' => 'attachment; filename="'.basename(str_replace('\\', '/', $resolvedPath)).'"',
+    ]);
 })->where('path', '.*')->name('uploads.show');
 
 Route::get('/', fn () => redirect('/login'));

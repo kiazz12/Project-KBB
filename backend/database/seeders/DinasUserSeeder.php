@@ -10,11 +10,18 @@ class DinasUserSeeder extends Seeder
 {
     public function run(): void
     {
+        // REA S-12: jangan hardcode password seed; dapat ditimpa lewat env.
+        $password = (string) env('SEED_ADMIN_PASSWORD', 'admin12345');
+
+        if ($password === 'admin12345') {
+            $this->command?->warn('SEED_ADMIN_PASSWORD belum diset. Password default "admin12345" hanya untuk pengembangan.');
+        }
+
         User::updateOrCreate(
             ['email' => 'admin@dinas.com'],
             [
                 'name' => 'Super Admin KBB',
-                'password' => Hash::make('admin12345'),
+                'password' => Hash::make($password),
                 'role' => 'super_admin',
             ]
         );
@@ -74,7 +81,7 @@ class DinasUserSeeder extends Seeder
                 ['email' => "admin@{$acct['slug']}.com"],
                 [
                     'name' => $acct['name'],
-                    'password' => Hash::make('admin12345'),
+                    'password' => Hash::make($password),
                     'role' => 'admin',
                 ]
             );

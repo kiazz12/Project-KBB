@@ -15,6 +15,10 @@ class FormCrudController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
         $query = Form::withCount(['fields', 'submissions']);
         if ($request->user()->role?->value === 'super_admin') {
             $query->with('user:id,name');

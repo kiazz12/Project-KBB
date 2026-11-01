@@ -19,6 +19,10 @@ class SubmissionApiController extends Controller
     {
         $this->authorize('view', $form);
 
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
         $query = $form->submissions()->with('data');
 
         if ($from = $request->from) {
@@ -173,6 +177,10 @@ class SubmissionApiController extends Controller
             }
             if ($field->min_length) {
                 $fieldRules[] = "min:{$field->min_length}";
+            }
+            // REA S-07: tanda tangan berupa teks bebas, batasi panjang.
+            if ($field->type->value === 'signature') {
+                $fieldRules[] = 'max:255';
             }
 
             $rules["field_{$field->id}"] = $fieldRules;

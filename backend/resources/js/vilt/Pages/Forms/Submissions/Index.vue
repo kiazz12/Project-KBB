@@ -77,6 +77,10 @@ function deleteBulk() {
 
 // Show first 4 fields as dynamic columns in table
 const previewFields = computed(() => (props.form.fields || []).slice(0, 4));
+
+function paginationLabel(label) {
+    return String(label ?? '').replace('&laquo;', '‹').replace('&raquo;', '›');
+}
 </script>
 
 <template>
@@ -298,8 +302,7 @@ const previewFields = computed(() => (props.form.fields || []).slice(0, 4));
                                 : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-700',
                             !link.url ? 'opacity-40 cursor-not-allowed' : '',
                         ]"
-                        v-html="link.label"
-                    />
+                    >{{ paginationLabel(link.label) }}</Component>
                 </div>
             </div>
         </div>

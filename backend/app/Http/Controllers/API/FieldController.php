@@ -56,6 +56,10 @@ class FieldController extends Controller
     {
         $this->authorize('update', $form);
 
+        // REA S-02: scope field ke form di URL agar field milik form lain
+        // tidak dapat diubah hanya dengan menebak ID (IDOR).
+        $field = $form->fields()->findOrFail($field->id);
+
         $request->validate([
             'type' => 'sometimes|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature,computed',
             'label' => 'sometimes|string|max:255',
@@ -87,6 +91,9 @@ class FieldController extends Controller
     public function destroy(Request $request, Form $form, FormField $field): JsonResponse
     {
         $this->authorize('update', $form);
+
+        // REA S-02: scope field ke form di URL (IDOR).
+        $field = $form->fields()->findOrFail($field->id);
 
         $field->delete();
 

@@ -167,8 +167,7 @@ function formatNip(nip) {
                         <span
                             v-if="!link.url"
                             class="rounded-lg px-3 py-1.5 text-xs text-gray-300 dark:text-gray-600"
-                            v-html="paginationLabel(link.label)"
-                        ></span>
+                        >{{ paginationLabel(link.label) }}</span>
                         <Link
                             v-else
                             :href="link.url"
@@ -177,8 +176,7 @@ function formatNip(nip) {
                             :class="link.active
                                 ? 'bg-kbb-700 text-white'
                                 : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700'"
-                            v-html="paginationLabel(link.label)"
-                        />
+                        >{{ paginationLabel(link.label) }}</Link>
                     </template>
                 </div>
             </div>

@@ -372,7 +372,37 @@ class PageController extends Controller
             'limit_one_response' => 'boolean',
             'confirmation_type' => 'in:message,redirect',
             'confirmation_message' => 'nullable|string|max:1000',
-            'redirect_url' => 'nullable|url|max:500',
+            // REA S-10: cegah open redirect. URL relatif atau host yang
+            // diizinkan (APP_URL + KBB_ALLOWED_REDIRECT_HOSTS) saja.
+            'redirect_url' => ['nullable', 'string', 'max:500', function (string $attribute, mixed $value, \Closure $fail): void {
+                if ($value === null || $value === '') {
+                    return;
+                }
+
+                if (str_starts_with($value, '/') && ! str_starts_with($value, '//')) {
+                    return;
+                }
+
+                $parts = parse_url($value);
+                $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+                $host = strtolower((string) ($parts['host'] ?? ''));
+
+                if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
+                    $fail('URL pengalihan harus berupa URL http/https yang valid.');
+
+                    return;
+                }
+
+                $appHost = strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST));
+                $allowed = array_filter(array_merge(
+                    config('kbb.allowed_redirect_hosts', []),
+                    $appHost !== '' ? [$appHost] : []
+                ));
+
+                if (! in_array($host, $allowed, true)) {
+                    $fail('Domain URL pengalihan tidak diizinkan.');
+                }
+            }],
         ]);
 
         $form->update([
@@ -1211,6 +1241,12 @@ class PageController extends Controller
 
             if (! empty($fieldRules)) {
                 $rules[$fieldKey] = implode('|', $fieldRules);
+            }
+            // REA S-07: tanda tangan berupa teks bebas, batasi panjang agar
+            // tidak menyimpan payload sangat besar ke submission_data.
+            if ($field->type->value === 'signature') {
+                $rules[$fieldKey] = trim(($rules[$fieldKey] ?? '').'|max:255', '|');
+                $messages["{$fieldKey}.max"] = "{$field->label} maksimal 255 karakter.";
             }
             if ($field->required) {
                 $messages["{$fieldKey}.required"] = "{$field->label} wajib diisi.";

@@ -16,6 +16,10 @@ class UserController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
         if ($request->boolean('all')) {
             $users = User::latest()->get();
         } else {
@@ -114,6 +118,10 @@ class UserController extends Controller
 
     public function forms(Request $request, User $user): JsonResponse
     {
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
         $forms = Form::where('user_id', $user->id)
             ->withCount(['fields', 'submissions'])
             ->latest()

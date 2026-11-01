@@ -105,15 +105,15 @@ function paginationLabel(label) {
 
                     <div v-if="forms.last_page > 1" class="mt-4 flex items-center justify-end gap-1 border-t border-gray-100 pt-4 dark:border-slate-700">
                         <template v-for="(link, index) in forms.links" :key="index">
-                            <span v-if="!link.url" class="rounded-lg px-3 py-1.5 text-xs text-gray-300 dark:text-gray-600" v-html="paginationLabel(link.label)"></span>
+                            <span v-if="!link.url" class="rounded-lg px-3 py-1.5 text-xs text-gray-300 dark:text-gray-600">{{ paginationLabel(link.label) }}</span>
                             <Link
                                 v-else
                                 :href="link.url"
                                 preserve-scroll
                                 class="rounded-lg px-3 py-1.5 text-xs font-medium transition"
                                 :class="link.active ? 'bg-kbb-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'"
-                                v-html="paginationLabel(link.label)"
-                            />
+                                {{ paginationLabel(link.label) }}
+                            ></Link>
                         </template>
                     </div>
                 </div>

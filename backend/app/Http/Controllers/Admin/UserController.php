@@ -8,6 +8,7 @@ use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
@@ -15,12 +16,18 @@ class UserController extends Controller
     {
         $users = User::latest()->paginate(20);
 
-        return view('admin.users.index', compact('users'));
+        $users->through(fn (User $user): array => $this->mapUser($user));
+
+        return Inertia::render('Admin/Users/Index', [
+            'users' => $users,
+        ]);
     }
 
     public function create()
     {
-        return view('admin.users.form');
+        return Inertia::render('Admin/Users/Form', [
+            'user' => null,
+        ]);
     }
 
     public function store(Request $request)
@@ -52,7 +59,9 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('admin.users.form', compact('user'));
+        return Inertia::render('Admin/Users/Form', [
+            'user' => $this->mapUser($user),
+        ]);
     }
 
     public function update(Request $request, User $user)
@@ -90,5 +99,22 @@ class UserController extends Controller
         AuditService::log('user.deleted', $user, "Admin panel: User '{$user->name}' deleted");
 
         return redirect(route('admin.users.index'))->with('success', 'User berhasil dihapus.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapUser(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role->value,
+            'is_super_admin' => $user->isSuperAdmin(),
+            'nip' => $user->nip,
+            'opd' => $user->opd,
+            'created_at' => $user->created_at?->format('d/m/Y'),
+        ];
     }
 }

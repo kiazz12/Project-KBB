@@ -252,4 +252,124 @@ class InertiaPagesTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonStructure(['data' => ['data', 'current_page', 'last_page']]);
     }
+
+    public function test_admin_login_page_renders_inertia_component_for_guest(): void
+    {
+        $response = $this->get('/admin/login');
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Auth/Login')
+            ->where('auth.user', null)
+        );
+    }
+
+    public function test_admin_dashboard_renders_inertia_component_with_stats(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($superAdmin)->get('/admin');
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Dashboard')
+            ->has('stats')
+            ->has('recentForms')
+            ->has('usersByRole')
+            ->has('activity.labels')
+            ->has('activity.data')
+        );
+    }
+
+    public function test_admin_activity_endpoint_returns_chart_data(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($superAdmin)->getJson('/admin/activity?range=1m');
+
+        $response->assertOk()->assertJsonStructure([
+            'labels',
+            'data',
+            'total',
+            'max',
+        ]);
+        $this->assertCount(30, $response->json('labels'));
+    }
+
+    public function test_admin_pages_are_forbidden_for_regular_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get('/admin')->assertForbidden();
+        $this->actingAs($admin)->get('/admin/users')->assertForbidden();
+        $this->actingAs($admin)->get('/admin/forms')->assertForbidden();
+    }
+
+    public function test_admin_users_pages_render_inertia_components(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $admin = User::factory()->create([
+            'name' => 'Admin Panel',
+            'nip' => '123456',
+            'opd' => 'Diskominfo',
+        ]);
+
+        $this->actingAs($superAdmin)->get('/admin/users')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Users/Index')
+                ->has('users.data', 2)
+                ->where('users.data', fn ($users) => collect($users)->pluck('id')->contains($admin->id))
+            );
+
+        $this->actingAs($superAdmin)->get('/admin/users/create')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Users/Form')
+                ->where('user', null)
+            );
+
+        $this->actingAs($superAdmin)->get("/admin/users/{$admin->id}/edit")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Users/Form')
+                ->where('user.id', $admin->id)
+                ->where('user.name', 'Admin Panel')
+                ->where('user.role', 'admin')
+                ->where('user.is_super_admin', false)
+            );
+    }
+
+    public function test_admin_forms_pages_render_inertia_components(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $form = Form::create([
+            'uuid' => (string) Str::uuid(),
+            'user_id' => $superAdmin->id,
+            'title' => 'Form Admin Panel',
+            'slug' => 'form-admin-panel',
+            'status' => FormStatus::Published,
+        ]);
+
+        $this->actingAs($superAdmin)->get('/admin/forms')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Forms/Index')
+                ->has('forms.data', 1)
+                ->where('forms.data.0.title', 'Form Admin Panel')
+                ->where('forms.data.0.status', 'published')
+                ->where('forms.data.0.owner', $superAdmin->name)
+            );
+
+        $this->actingAs($superAdmin)->get("/admin/forms/{$form->id}")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Forms/Show')
+                ->where('form.title', 'Form Admin Panel')
+                ->where('form.owner', $superAdmin->name)
+                ->where('form.status', 'published')
+                ->has('submissions.data', 0)
+            );
+    }
 }

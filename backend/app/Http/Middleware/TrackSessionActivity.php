@@ -11,12 +11,8 @@ class TrackSessionActivity
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // REA D-01: hanya navigasi halaman (GET/HEAD/OPTIONS) yang me-refresh
-        // idle timer. Sebelumnya semua request — termasuk polling Livewire
-        // wire:poll.30s — me-refresh timer sehingga sesi tidak pernah kedaluwarsa.
-        if ($request->user()
-            && $request->isMethod('GET')
-            && ! $request->header('X-Livewire')) {
+        // Only page navigation refreshes the idle timer; background requests do not.
+        if ($request->user() && $request->isMethod('GET')) {
             Session::put('last_activity_at', now()->timestamp);
         }
 

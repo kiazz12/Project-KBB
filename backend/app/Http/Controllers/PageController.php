@@ -4,16 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Exports\SubmissionsExport;
 use App\Models\Form;
+use App\Models\FormField;
+use App\Models\FormSection;
 use App\Models\FormSubmission;
 use App\Models\SubmissionData;
 use App\Models\User;
+use App\Models\UserSession;
 use App\Services\AuditService;
 use App\Services\NotificationService;
 use App\Support\Csv;
+use App\Support\InertiaForm;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -260,7 +265,425 @@ class PageController extends Controller
 
     public function formsCreate()
     {
-        return view('forms.create');
+        return Inertia::render('Forms/Create');
+    }
+
+    public function formsStore(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:5000',
+        ]);
+
+        $slug = Str::slug($request->title);
+        $baseSlug = $slug ?: 'formulir';
+        $counter = 1;
+        while (Form::where('slug', $slug)->exists()) {
+            $slug = $baseSlug.'-'.$counter;
+            $counter++;
+        }
+
+        $form = Form::create([
+            'uuid' => (string) Str::uuid(),
+            'user_id' => Auth::id(),
+            'title' => $request->title,
+            'description' => $request->description,
+            'slug' => $slug,
+            'status' => 'draft',
+        ]);
+
+        AuditService::log('form_created', $form, "Form '{$form->title}' created");
+        NotificationService::notifySuperAdmins('form_created', "membuat form baru \"{$form->title}\".", [
+            'form_id' => $form->id,
+            'form_title' => $form->title,
+        ]);
+
+        return redirect()->route('forms.edit', $form)->with('success', 'Form berhasil dibuat.');
+    }
+
+    public function formsEdit(int $id)
+    {
+        $form = Form::with([
+            'fields' => fn ($q) => $q->orderBy('order'),
+            'sections' => fn ($q) => $q->orderBy('order'),
+        ])->findOrFail($id);
+
+        $this->authorize('update', $form);
+
+        return Inertia::render('Forms/Edit', [
+            'form' => [
+                'id' => $form->id,
+                'title' => $form->title,
+                'description' => $form->description ?? '',
+                'slug' => $form->slug,
+                'status' => $form->status->value,
+                'status_label' => ucfirst($form->status->value),
+                'starts_at' => $form->starts_at?->format('Y-m-d\TH:i'),
+                'ends_at' => $form->ends_at?->format('Y-m-d\TH:i'),
+                'max_submissions' => $form->max_submissions ?? 0,
+                'require_auth' => (bool) $form->require_auth,
+                'collect_ip' => (bool) $form->collect_ip,
+                'show_kbb_logo' => (bool) $form->show_kbb_logo,
+                'limit_one_response' => (bool) $form->limit_one_response,
+                'confirmation_type' => $form->confirmation_type ?? 'message',
+                'confirmation_message' => $form->confirmation_message ?? 'Terima kasih, jawaban Anda telah dicatat.',
+                'redirect_url' => $form->redirect_url ?? '',
+                'public_url' => url('/form/'.$form->slug),
+                'fields' => $form->fields->map(fn ($f): array => [
+                    'id' => $f->id,
+                    'section_id' => $f->section_id,
+                    'type' => $f->type->value,
+                    'label' => $f->label,
+                    'placeholder' => $f->placeholder ?? '',
+                    'help_text' => $f->help_text ?? '',
+                    'required' => (bool) $f->required,
+                    'options' => $f->options ?? [],
+                    'order' => $f->order,
+                    'formula' => $f->formula,
+                ])->values(),
+                'sections' => $form->sections->map(fn ($s): array => [
+                    'id' => $s->id,
+                    'title' => $s->title,
+                    'description' => $s->description ?? '',
+                    'order' => $s->order,
+                ])->values(),
+            ],
+        ]);
+    }
+
+    public function updateSettings(Request $request, int $id)
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('update', $form);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:5000',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'max_submissions' => 'nullable|integer|min:0',
+            'require_auth' => 'boolean',
+            'collect_ip' => 'boolean',
+            'show_kbb_logo' => 'boolean',
+            'limit_one_response' => 'boolean',
+            'confirmation_type' => 'in:message,redirect',
+            'confirmation_message' => 'nullable|string|max:1000',
+            'redirect_url' => 'nullable|url|max:500',
+        ]);
+
+        $form->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'starts_at' => $request->starts_at ?: null,
+            'ends_at' => $request->ends_at ?: null,
+            'max_submissions' => $request->max_submissions ?: null,
+            'require_auth' => $request->boolean('require_auth'),
+            'collect_ip' => $request->boolean('collect_ip'),
+            'show_kbb_logo' => $request->boolean('show_kbb_logo'),
+            'limit_one_response' => $request->boolean('limit_one_response'),
+            'confirmation_type' => $request->confirmation_type ?? 'message',
+            'confirmation_message' => $request->confirmation_message ?? 'Terima kasih, jawaban Anda telah dicatat.',
+            'redirect_url' => $request->redirect_url ?: null,
+        ]);
+
+        AuditService::log('form_settings_updated', $form, "Form '{$form->title}' settings updated");
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Pengaturan berhasil disimpan.']);
+        }
+
+        return back()->with('success', 'Pengaturan berhasil disimpan.');
+    }
+
+    public function publishForm(int $id)
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('update', $form);
+
+        $form->update(['status' => 'published']);
+
+        AuditService::log('form_published', $form, "Form '{$form->title}' published");
+        NotificationService::notifySuperAdmins('form_published', "menerbitkan form \"{$form->title}\".", [
+            'form_id' => $form->id,
+            'form_title' => $form->title,
+        ]);
+
+        return back()->with('success', 'Form berhasil diterbitkan.');
+    }
+
+    public function closeForm(int $id)
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('update', $form);
+
+        $form->update(['status' => 'closed']);
+
+        AuditService::log('form_closed', $form, "Form '{$form->title}' closed");
+        NotificationService::notifySuperAdmins('form_closed', "menutup form \"{$form->title}\".", [
+            'form_id' => $form->id,
+            'form_title' => $form->title,
+        ]);
+
+        return back()->with('success', 'Form berhasil ditutup.');
+    }
+
+    public function storeField(Request $request, int $id)
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('update', $form);
+
+        $request->validate([
+            'type' => 'required|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature,computed',
+            'label' => 'required|string|max:255',
+            'placeholder' => 'nullable|string|max:255',
+            'help_text' => 'nullable|string|max:500',
+            'required' => 'boolean',
+            'options' => 'nullable|array',
+            'section_id' => 'nullable|integer',
+            'formula' => 'nullable|array',
+        ]);
+
+        $maxOrder = $form->fields()->max('order') ?? 0;
+
+        $field = FormField::create([
+            'form_id' => $form->id,
+            'section_id' => $request->section_id ?: null,
+            'type' => $request->type,
+            'label' => $request->label,
+            'placeholder' => $request->placeholder,
+            'help_text' => $request->help_text,
+            'required' => $request->boolean('required'),
+            'options' => $request->options,
+            'order' => $maxOrder + 1,
+            'formula' => $request->formula,
+        ]);
+
+        AuditService::log('form_field_created', $form, "Field '{$field->label}' added");
+
+        return back()->with('success', 'Field berhasil ditambahkan.');
+    }
+
+    public function updateField(Request $request, int $formId, int $fieldId)
+    {
+        $form = Form::findOrFail($formId);
+        $this->authorize('update', $form);
+
+        $field = $form->fields()->findOrFail($fieldId);
+
+        $request->validate([
+            'type' => 'required|string|in:text,textarea,email,number,date,time,select,radio,checkbox,file,heading,paragraph,signature,computed',
+            'label' => 'required|string|max:255',
+            'placeholder' => 'nullable|string|max:255',
+            'help_text' => 'nullable|string|max:500',
+            'required' => 'boolean',
+            'options' => 'nullable|array',
+            'section_id' => 'nullable|integer',
+            'formula' => 'nullable|array',
+        ]);
+
+        $field->update([
+            'section_id' => $request->section_id ?: null,
+            'type' => $request->type,
+            'label' => $request->label,
+            'placeholder' => $request->placeholder,
+            'help_text' => $request->help_text,
+            'required' => $request->boolean('required'),
+            'options' => $request->options,
+            'formula' => $request->formula,
+        ]);
+
+        AuditService::log('form_field_updated', $form, "Field '{$field->label}' updated");
+
+        return back()->with('success', 'Field berhasil diperbarui.');
+    }
+
+    public function deleteField(int $formId, int $fieldId)
+    {
+        $form = Form::findOrFail($formId);
+        $this->authorize('update', $form);
+
+        $field = $form->fields()->findOrFail($fieldId);
+        $label = $field->label;
+        $field->delete();
+
+        $fields = $form->fields()->orderBy('order')->get();
+        foreach ($fields as $i => $f) {
+            if ($f->order !== $i + 1) {
+                $f->update(['order' => $i + 1]);
+            }
+        }
+
+        AuditService::log('form_field_deleted', $form, "Field '{$label}' deleted");
+
+        return back()->with('success', 'Field berhasil dihapus.');
+    }
+
+    public function reorderFields(Request $request, int $id)
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('update', $form);
+
+        $orderIds = $request->input('order', []);
+        foreach ($orderIds as $index => $fieldId) {
+            $form->fields()->where('id', $fieldId)->update(['order' => $index + 1]);
+        }
+
+        return back()->with('success', 'Urutan field diperbarui.');
+    }
+
+    public function cloneField(int $formId, int $fieldId)
+    {
+        $form = Form::findOrFail($formId);
+        $this->authorize('update', $form);
+
+        $field = $form->fields()->findOrFail($fieldId);
+        $maxOrder = $form->fields()->max('order') ?? 0;
+
+        $cloned = $field->replicate(['created_at', 'updated_at']);
+        $cloned->label = $field->label.' (Salinan)';
+        $cloned->order = $maxOrder + 1;
+        $cloned->save();
+
+        AuditService::log('form_field_cloned', $form, "Field '{$field->label}' duplicated");
+
+        return back()->with('success', 'Field berhasil diduplikasi.');
+    }
+
+    public function storeSection(Request $request, int $id)
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('update', $form);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $maxOrder = $form->sections()->max('order') ?? 0;
+
+        $section = FormSection::create([
+            'form_id' => $form->id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'order' => $maxOrder + 1,
+        ]);
+
+        AuditService::log('form_section_created', $form, "Section '{$section->title}' added");
+
+        return back()->with('success', 'Section berhasil ditambahkan.');
+    }
+
+    public function updateSection(Request $request, int $formId, int $sectionId)
+    {
+        $form = Form::findOrFail($formId);
+        $this->authorize('update', $form);
+
+        $section = $form->sections()->findOrFail($sectionId);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $section->update([
+            'title' => $request->title,
+            'description' => $request->description,
+        ]);
+
+        AuditService::log('form_section_updated', $form, "Section '{$section->title}' updated");
+
+        return back()->with('success', 'Section berhasil diperbarui.');
+    }
+
+    public function deleteSection(int $formId, int $sectionId)
+    {
+        $form = Form::findOrFail($formId);
+        $this->authorize('update', $form);
+
+        $section = $form->sections()->findOrFail($sectionId);
+        $title = $section->title;
+
+        $section->fields()->update(['section_id' => null]);
+        $section->delete();
+
+        $sections = $form->sections()->orderBy('order')->get();
+        foreach ($sections as $i => $s) {
+            $s->update(['order' => $i + 1]);
+        }
+
+        AuditService::log('form_section_deleted', $form, "Section '{$title}' deleted");
+
+        return back()->with('success', 'Section berhasil dihapus.');
+    }
+
+    public function reorderSections(Request $request, int $id)
+    {
+        $form = Form::findOrFail($id);
+        $this->authorize('update', $form);
+
+        $orderIds = $request->input('order', []);
+        foreach ($orderIds as $index => $sectionId) {
+            $form->sections()->where('id', $sectionId)->update(['order' => $index + 1]);
+        }
+
+        return back()->with('success', 'Urutan section diperbarui.');
+    }
+
+    public function formsAnalytics(int $id)
+    {
+        $form = Form::with('fields')->findOrFail($id);
+        $this->authorize('view', $form);
+
+        AuditService::log('form.analytics.viewed', $form, "Analytics viewed for form '{$form->title}'");
+
+        $totalSubmissions = $form->submissions()->count();
+        $submissionsByDate = $form->submissions()
+            ->selectRaw('DATE(submitted_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(fn ($item): array => [
+                'date' => Carbon::parse($item->date)->format('d/m'),
+                'count' => (int) $item->count,
+            ])
+            ->values();
+
+        $maxByDate = max($submissionsByDate->pluck('count')->all() ?: [0]);
+
+        $fieldAnalytics = [];
+        foreach ($form->fields as $field) {
+            $values = $form->submissions()
+                ->join('submission_data', 'form_submissions.id', '=', 'submission_data.submission_id')
+                ->where('submission_data.form_field_id', $field->id)
+                ->selectRaw('submission_data.value, COUNT(*) as count')
+                ->groupBy('submission_data.value')
+                ->orderByDesc('count')
+                ->get();
+            $counts = [];
+            foreach ($values as $v) {
+                $counts[(string) $v->value] = (int) $v->count;
+            }
+            $fieldAnalytics[] = [
+                'field_id' => $field->id,
+                'field_label' => $field->label,
+                'field_type' => $field->type->value,
+                'counts' => $counts,
+            ];
+        }
+
+        return Inertia::render('Forms/Analytics', [
+            'form' => [
+                'id' => $form->id,
+                'title' => $form->title,
+                'status' => $form->status->value,
+                'status_label' => ucfirst($form->status->value),
+                'fields_count' => $form->fields->count(),
+            ],
+            'totalSubmissions' => $totalSubmissions,
+            'submissionsByDate' => $submissionsByDate,
+            'maxByDate' => $maxByDate,
+            'fieldAnalytics' => $fieldAnalytics,
+        ]);
     }
 
     public function formsShow(int $id)
@@ -303,14 +726,6 @@ class PageController extends Controller
         ]);
     }
 
-    public function formsEdit(int $id)
-    {
-        $form = Form::with(['fields' => fn ($q) => $q->orderBy('order')])->findOrFail($id);
-        $this->authorize('update', $form);
-
-        return view('forms.edit', compact('form'));
-    }
-
     public function duplicateForm(int $id)
     {
         $form = Form::with('fields')->findOrFail($id);
@@ -349,47 +764,9 @@ class PageController extends Controller
             ->with('success', 'Form berhasil digandakan sebagai draft.');
     }
 
-    public function formsAnalytics(int $id)
-    {
-        $form = Form::with('fields')->findOrFail($id);
-        $this->authorize('view', $form);
-
-        AuditService::log('form.analytics.viewed', $form, "Analytics viewed for form '{$form->title}'");
-
-        $totalSubmissions = $form->submissions()->count();
-        $submissionsByDate = $form->submissions()
-            ->selectRaw('DATE(submitted_at) as date, COUNT(*) as count')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        $fieldAnalytics = [];
-        foreach ($form->fields as $field) {
-            $values = $form->submissions()
-                ->join('submission_data', 'form_submissions.id', '=', 'submission_data.submission_id')
-                ->where('submission_data.form_field_id', $field->id)
-                ->selectRaw('submission_data.value, COUNT(*) as count')
-                ->groupBy('submission_data.value')
-                ->orderByDesc('count')
-                ->get();
-            $counts = [];
-            foreach ($values as $v) {
-                $counts[$v->value] = $v->count;
-            }
-            $fieldAnalytics[] = [
-                'field_id' => $field->id,
-                'field_label' => $field->label,
-                'field_type' => $field->type->value,
-                'counts' => $counts,
-            ];
-        }
-
-        return view('forms.analytics', compact('form', 'totalSubmissions', 'submissionsByDate', 'fieldAnalytics'));
-    }
-
     public function submissionsIndex(int $id)
     {
-        $form = Form::findOrFail($id);
+        $form = Form::with(['fields' => fn ($q) => $q->orderBy('order')])->findOrFail($id);
         $this->authorize('view', $form);
 
         AuditService::log('submissions.viewed', $form, "Submissions list viewed for form '{$form->title}'");
@@ -412,9 +789,42 @@ class PageController extends Controller
             $query->whereDate('submitted_at', '<=', $to);
         }
 
-        $submissions = $query->latest('submitted_at')->paginate(20);
+        $submissions = $query->latest('submitted_at')->paginate(20)->withQueryString();
 
-        return view('forms.submissions.index', compact('form', 'submissions'));
+        $submissions->through(fn (FormSubmission $sub): array => [
+            'id' => $sub->id,
+            'uuid' => $sub->uuid,
+            'submitted_at' => $sub->submitted_at?->translatedFormat('d M Y H:i'),
+            'submitted_at_iso' => $sub->submitted_at?->toIso8601String(),
+            'ip_address' => $sub->ip_address,
+            'data' => $sub->data->keyBy('form_field_id')->map(fn ($d) => $d->value),
+            'url' => route('forms.submissions.show', [$form->id, $sub->id]),
+        ]);
+
+        return Inertia::render('Forms/Submissions/Index', [
+            'form' => [
+                'id' => $form->id,
+                'title' => $form->title,
+                'status' => $form->status->value,
+                'status_label' => ucfirst($form->status->value),
+                'fields' => $form->fields->map(fn ($f): array => [
+                    'id' => $f->id,
+                    'label' => $f->label,
+                    'type' => $f->type->value,
+                ])->values(),
+                'exports' => [
+                    'csv' => route('forms.export.csv', $form),
+                    'xlsx' => route('forms.export.xlsx', $form),
+                    'pdf' => route('forms.export.pdf', $form),
+                ],
+            ],
+            'submissions' => $submissions,
+            'filters' => [
+                'search' => request('search', ''),
+                'from' => request('from', ''),
+                'to' => request('to', ''),
+            ],
+        ]);
     }
 
     public function bulkDeleteSubmissions(Request $request, int $id)
@@ -466,15 +876,41 @@ class PageController extends Controller
 
     public function submissionsShow(int $formId, int $id)
     {
-        $form = Form::findOrFail($formId);
+        $form = Form::with(['fields' => fn ($q) => $q->orderBy('order')])->findOrFail($formId);
         $this->authorize('view', $form);
 
-        // Di-scope ke form: mencegah IDOR detail submission lintas form (temuan REA S-01).
         $submission = $form->submissions()->with('data.formField')->findOrFail($id);
 
         AuditService::log('submission.viewed', $submission, "Submission #{$id} viewed on form '{$form->title}'");
 
-        return view('forms.submissions.show', compact('form', 'submission'));
+        return Inertia::render('Forms/Submissions/Show', [
+            'form' => [
+                'id' => $form->id,
+                'title' => $form->title,
+            ],
+            'submission' => [
+                'id' => $submission->id,
+                'uuid' => $submission->uuid,
+                'submitted_at' => $submission->submitted_at?->translatedFormat('l, d F Y H:i'),
+                'ip_address' => $submission->ip_address,
+                'user_agent' => $submission->user_agent,
+                'answers' => $form->fields->map(function ($field) use ($submission): array {
+                    $item = $submission->data->firstWhere('form_field_id', $field->id);
+                    $val = $item?->value;
+
+                    return [
+                        'field_id' => $field->id,
+                        'label' => $field->label,
+                        'type' => $field->type->value,
+                        'value' => $val,
+                        'is_file' => $field->type->value === 'file',
+                        'file_url' => ($field->type->value === 'file' && $val)
+                            ? url(Str::startsWith($val, 'uploads/') ? $val : 'uploads/'.$val)
+                            : null,
+                    ];
+                })->values(),
+            ],
+        ]);
     }
 
     public function usersIndex()
@@ -618,6 +1054,255 @@ class PageController extends Controller
 
     public function publicForm(string $slug)
     {
-        return view('public-form', compact('slug'));
+        $form = Form::with([
+            'fields' => fn ($q) => $q->orderBy('order'),
+            'sections' => fn ($q) => $q->orderBy('order'),
+        ])->where('slug', $slug)->first();
+
+        if (! $form) {
+            return Inertia::render('PublicForm', [
+                'error' => 'Formulir tidak ditemukan atau tidak tersedia.',
+                'form' => null,
+            ]);
+        }
+
+        if ($form->status->value !== 'published') {
+            return Inertia::render('PublicForm', [
+                'error' => 'Formulir ini belum diterbitkan atau telah ditutup.',
+                'form' => null,
+            ]);
+        }
+
+        if ($form->isNotOpenYet()) {
+            return Inertia::render('PublicForm', [
+                'error' => 'Pengisian formulir ini belum dibuka. Silakan kembali sesuai jadwal.',
+                'form' => null,
+            ]);
+        }
+
+        if ($form->isExpired()) {
+            return Inertia::render('PublicForm', [
+                'error' => 'Formulir ini sudah tidak menerima jawaban.',
+                'form' => null,
+            ]);
+        }
+
+        if ($form->isFull()) {
+            return Inertia::render('PublicForm', [
+                'error' => 'Formulir ini sudah mencapai batas maksimum jawaban.',
+                'form' => null,
+            ]);
+        }
+
+        if ($form->require_auth && ! Auth::check()) {
+            return Inertia::render('PublicForm', [
+                'error' => 'Silakan login terlebih dahulu untuk mengisi formulir ini.',
+                'form' => null,
+                'requiresAuth' => true,
+            ]);
+        }
+
+        if ($form->limit_one_response && Auth::check()
+            && $form->submissions()->where('user_id', Auth::id())->exists()) {
+            return Inertia::render('PublicForm', [
+                'error' => 'Anda sudah pernah mengisi formulir ini.',
+                'form' => null,
+            ]);
+        }
+
+        return Inertia::render('PublicForm', [
+            'error' => null,
+            'form' => [
+                'id' => $form->id,
+                'title' => $form->title,
+                'description' => $form->description,
+                'slug' => $form->slug,
+                'show_kbb_logo' => (bool) $form->show_kbb_logo,
+                'confirmation_type' => $form->confirmation_type ?? 'message',
+                'confirmation_message' => $form->confirmation_message ?? 'Terima kasih, jawaban Anda telah dicatat.',
+                'redirect_url' => $form->redirect_url,
+                'sections' => $form->sections->map(fn ($s): array => [
+                    'id' => $s->id,
+                    'title' => $s->title,
+                    'description' => $s->description,
+                    'order' => $s->order,
+                ])->values(),
+                'fields' => $form->fields->reject->is_admin_only->map(fn ($f): array => [
+                    'id' => $f->id,
+                    'section_id' => $f->section_id,
+                    'type' => $f->type->value,
+                    'label' => $f->label,
+                    'placeholder' => $f->placeholder ?? '',
+                    'help_text' => $f->help_text ?? '',
+                    'required' => (bool) $f->required,
+                    'options' => $f->options ?? [],
+                    'order' => $f->order,
+                    'formula' => $f->formula,
+                ])->values(),
+            ],
+        ]);
+    }
+
+    public function submitPublicForm(Request $request, string $slug)
+    {
+        if (! empty($request->input('company_website'))) {
+            return back()->with('error', 'Pengiriman ditolak.');
+        }
+
+        $form = Form::with('fields')->where('slug', $slug)->firstOrFail();
+
+        if (! $form->isAcceptingSubmissions()) {
+            $msg = match (true) {
+                $form->isNotOpenYet() => 'Pengisian formulir ini belum dibuka.',
+                $form->isExpired() => 'Form ini sudah tidak menerima jawaban.',
+                default => 'Form ini sudah mencapai batas maksimum jawaban.',
+            };
+
+            return back()->with('error', $msg);
+        }
+
+        if ($form->require_auth && ! Auth::check()) {
+            return back()->with('error', 'Silakan login terlebih dahulu untuk mengisi formulir ini.');
+        }
+
+        if ($form->limit_one_response && Auth::check()
+            && $form->submissions()->where('user_id', Auth::id())->exists()) {
+            return back()->with('error', 'Anda sudah pernah mengisi formulir ini.');
+        }
+
+        $responses = $request->input('responses', []);
+        if (! is_array($responses)) {
+            $responses = [];
+        }
+
+        $rules = [];
+        $messages = [];
+        foreach ($form->fields as $field) {
+            if ($field->is_admin_only || $field->type->value === 'computed') {
+                continue;
+            }
+
+            $fieldKey = "responses.{$field->id}";
+            $fieldRules = [];
+
+            if (in_array($field->type->value, ['file', 'signature'], true)) {
+                if ($field->required) {
+                    $fieldRules[] = 'required';
+                }
+                if ($field->type->value === 'file') {
+                    $fieldRules[] = 'file';
+                    $fieldRules[] = 'max:2048';
+                    $fieldRules[] = 'mimes:jpg,jpeg,png,pdf,doc,docx';
+                }
+            } else {
+                if ($field->required) {
+                    $fieldRules[] = 'required';
+                }
+                $fieldRules[] = match ($field->type->value) {
+                    'email' => 'email',
+                    'number' => 'numeric',
+                    default => 'string',
+                };
+            }
+
+            if (! empty($fieldRules)) {
+                $rules[$fieldKey] = implode('|', $fieldRules);
+            }
+            if ($field->required) {
+                $messages["{$fieldKey}.required"] = "{$field->label} wajib diisi.";
+            }
+            if ($field->type->value === 'file') {
+                $messages["{$fieldKey}.file"] = "{$field->label} harus berupa file.";
+                $messages["{$fieldKey}.mimes"] = "{$field->label} harus berupa file JPG, PNG, atau PDF.";
+                $messages["{$fieldKey}.max"] = "{$field->label} maksimal 2MB.";
+            }
+        }
+
+        $request->validate($rules, $messages);
+
+        DB::transaction(function () use ($form, $request, $responses) {
+            $submission = FormSubmission::create([
+                'uuid' => (string) Str::uuid(),
+                'form_id' => $form->id,
+                'user_id' => Auth::check() ? Auth::id() : null,
+                'ip_address' => $form->collect_ip ? $request->ip() : null,
+                'user_agent' => $form->collect_ip ? $request->userAgent() : null,
+                'submitted_at' => now(),
+            ]);
+
+            foreach ($form->fields as $field) {
+                if ($field->is_admin_only) {
+                    continue;
+                }
+
+                $value = null;
+                if ($field->type->value === 'file' && $request->hasFile("responses.{$field->id}")) {
+                    $file = $request->file("responses.{$field->id}");
+                    $path = $file->store('uploads', 'local');
+                    $value = $path;
+                } elseif ($field->type->value === 'computed') {
+                    $refId = $field->formula['ref_field_id'] ?? null;
+                    $op = $field->formula['operation'] ?? 'multiply';
+                    $cVal = $field->formula['value'] ?? null;
+                    $ref1 = (float) ($responses[(string) $refId] ?? 0);
+                    $ref2 = $cVal !== null ? (float) $cVal : (float) ($responses[(string) ($field->formula['ref_field_id_2'] ?? '')] ?? 0);
+                    $calc = match ($op) {
+                        'multiply' => $ref1 * $ref2,
+                        'add' => $ref1 + $ref2,
+                        'subtract' => $ref1 - $ref2,
+                        'divide' => $ref2 != 0 ? $ref1 / $ref2 : 0,
+                        default => $ref1,
+                    };
+                    $value = number_format($calc, 0, '.', '');
+                } else {
+                    $val = $responses[$field->id] ?? null;
+                    $value = is_array($val) ? json_encode($val) : (string) $val;
+                }
+
+                SubmissionData::create([
+                    'submission_id' => $submission->id,
+                    'form_field_id' => $field->id,
+                    'value' => (string) $value,
+                ]);
+            }
+
+            AuditService::log('submission_created', $submission, "New submission for form '{$form->title}'");
+            NotificationService::notifySuperAdmins('new_submission', "Respon baru masuk untuk form \"{$form->title}\".", [
+                'form_id' => $form->id,
+                'submission_id' => $submission->id,
+            ]);
+        });
+
+        return back()->with('submitted', true)->with('success', $form->confirmation_message ?? 'Terima kasih, jawaban Anda telah dicatat.');
+    }
+
+    public function sessionPing(Request $request)
+    {
+        $request->session()->put('last_activity_at', now()->timestamp);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function sessionExtend(Request $request)
+    {
+        $request->session()->put('last_activity_at', now()->timestamp);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function sessionDisplayName(Request $request)
+    {
+        $request->validate([
+            'displayName' => 'required|string|min:2|max:255',
+        ]);
+
+        $sessionId = session('user_session_id');
+        if ($sessionId) {
+            UserSession::where('id', $sessionId)->update([
+                'display_name' => $request->displayName,
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'display_name' => $request->displayName]);
     }
 }

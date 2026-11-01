@@ -2,6 +2,8 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import NotificationBell from '../Components/NotificationBell.vue';
+import DisplayNameModal from '../Components/DisplayNameModal.vue';
+import SessionTimeoutModal from '../Components/SessionTimeoutModal.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
@@ -237,5 +239,8 @@ onUnmounted(() => {
                 </svg>
             </button>
         </div>
+
+        <DisplayNameModal v-if="user" />
+        <SessionTimeoutModal v-if="user" />
     </div>
 </template>

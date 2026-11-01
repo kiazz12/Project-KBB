@@ -20,8 +20,24 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/activity', [PageController::class, 'activity'])->name('dashboard.activity');
     Route::get('/forms', [PageController::class, 'formsIndex'])->name('forms.index');
     Route::get('/forms/create', [PageController::class, 'formsCreate'])->name('forms.create');
+    Route::post('/forms', [PageController::class, 'formsStore'])->name('forms.store');
     Route::get('/forms/{form}', [PageController::class, 'formsShow'])->name('forms.show')->whereNumber('form');
     Route::get('/forms/{form}/edit', [PageController::class, 'formsEdit'])->name('forms.edit')->whereNumber('form');
+    Route::put('/forms/{form}/settings', [PageController::class, 'updateSettings'])->name('forms.settings.update')->whereNumber('form');
+    Route::post('/forms/{form}/publish', [PageController::class, 'publishForm'])->name('forms.publish')->whereNumber('form');
+    Route::post('/forms/{form}/close', [PageController::class, 'closeForm'])->name('forms.close')->whereNumber('form');
+
+    Route::post('/forms/{form}/fields', [PageController::class, 'storeField'])->name('forms.fields.store')->whereNumber('form');
+    Route::put('/forms/{form}/fields/{field}', [PageController::class, 'updateField'])->name('forms.fields.update')->whereNumber('form')->whereNumber('field');
+    Route::delete('/forms/{form}/fields/{field}', [PageController::class, 'deleteField'])->name('forms.fields.delete')->whereNumber('form')->whereNumber('field');
+    Route::post('/forms/{form}/fields/reorder', [PageController::class, 'reorderFields'])->name('forms.fields.reorder')->whereNumber('form');
+    Route::post('/forms/{form}/fields/{field}/clone', [PageController::class, 'cloneField'])->name('forms.fields.clone')->whereNumber('form')->whereNumber('field');
+
+    Route::post('/forms/{form}/sections', [PageController::class, 'storeSection'])->name('forms.sections.store')->whereNumber('form');
+    Route::put('/forms/{form}/sections/{section}', [PageController::class, 'updateSection'])->name('forms.sections.update')->whereNumber('form')->whereNumber('section');
+    Route::delete('/forms/{form}/sections/{section}', [PageController::class, 'deleteSection'])->name('forms.sections.delete')->whereNumber('form')->whereNumber('section');
+    Route::post('/forms/{form}/sections/reorder', [PageController::class, 'reorderSections'])->name('forms.sections.reorder')->whereNumber('form');
+
     Route::post('/forms/{form}/duplicate', [PageController::class, 'duplicateForm'])->name('forms.duplicate')->whereNumber('form');
     Route::get('/forms/{form}/analytics', [PageController::class, 'formsAnalytics'])->name('forms.analytics')->whereNumber('form');
     Route::get('/forms/{form}/submissions', [PageController::class, 'submissionsIndex'])->name('forms.submissions.index')->whereNumber('form');
@@ -36,6 +52,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/change-password', [PageController::class, 'changePassword'])->name('change-password');
     Route::post('/change-password', [WebAuthController::class, 'changePassword']);
 
+    Route::post('/session/ping', [PageController::class, 'sessionPing'])->name('session.ping');
+    Route::post('/session/extend', [PageController::class, 'sessionExtend'])->name('session.extend');
+    Route::post('/session/display-name', [PageController::class, 'sessionDisplayName'])->name('session.display-name');
+
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
         Route::get('/unread', [NotificationController::class, 'unread'])->name('unread');
@@ -45,6 +65,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/form/{slug}', [PageController::class, 'publicForm'])->name('public-form');
+Route::post('/form/{slug}', [PageController::class, 'submitPublicForm'])->name('public-form.submit')->middleware('throttle:15,1');
 
 Route::get('/uploads/{path}', function (string $path) {
     abort_unless(Auth::check(), 401);

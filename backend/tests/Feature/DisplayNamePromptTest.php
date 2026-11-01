@@ -2,99 +2,43 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\DisplayNamePrompt;
 use App\Models\User;
 use App\Models\UserSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use Tests\TestCase;
 
 class DisplayNamePromptTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $user;
-
-    protected function setUp(): void
+    public function test_display_name_is_saved_to_current_session_record(): void
     {
-        parent::setUp();
-        $this->user = User::factory()->create([
-            'name' => 'Test User',
-            'display_name' => null,
-        ]);
-    }
-
-    public function test_display_name_prompt_always_shows_on_mount(): void
-    {
-        $this->actingAs($this->user);
-
-        $component = Livewire::test(DisplayNamePrompt::class);
-
-        $component->assertSet('show', true);
-    }
-
-    public function test_display_name_prompt_saves_to_session_record(): void
-    {
-        $this->actingAs($this->user);
-
+        $user = User::factory()->create(['display_name' => null]);
         $session = UserSession::create([
-            'user_id' => $this->user->id,
+            'user_id' => $user->id,
             'display_name' => '',
             'logged_in_at' => now(),
         ]);
-        session()->put('user_session_id', $session->id);
 
-        Livewire::test(DisplayNamePrompt::class)
-            ->set('displayName', 'John Doe')
-            ->call('saveDisplayName');
+        $response = $this->actingAs($user)
+            ->withSession(['user_session_id' => $session->id])
+            ->postJson('/session/display-name', ['displayName' => 'John Doe']);
 
-        $session->refresh();
-        $this->assertEquals('John Doe', $session->display_name);
-    }
-
-    public function test_display_name_prompt_hides_after_save(): void
-    {
-        $this->actingAs($this->user);
-
-        $session = UserSession::create([
-            'user_id' => $this->user->id,
-            'display_name' => '',
-            'logged_in_at' => now(),
+        $response->assertOk()->assertJsonPath('display_name', 'John Doe');
+        $this->assertDatabaseHas('user_sessions', [
+            'id' => $session->id,
+            'display_name' => 'John Doe',
         ]);
-        session()->put('user_session_id', $session->id);
-
-        Livewire::test(DisplayNamePrompt::class)
-            ->set('displayName', 'John Doe')
-            ->call('saveDisplayName')
-            ->assertSet('show', false);
+        $this->assertNull($user->fresh()->display_name);
     }
 
-    public function test_display_name_prompt_validates_minimum_length(): void
+    public function test_display_name_endpoint_validates_minimum_length(): void
     {
-        $this->actingAs($this->user);
+        $user = User::factory()->create();
 
-        Livewire::test(DisplayNamePrompt::class)
-            ->set('displayName', 'A')
-            ->call('saveDisplayName')
-            ->assertHasErrors(['displayName']);
-    }
-
-    public function test_display_name_prompt_does_not_save_to_users_table(): void
-    {
-        $this->actingAs($this->user);
-
-        $session = UserSession::create([
-            'user_id' => $this->user->id,
-            'display_name' => '',
-            'logged_in_at' => now(),
-        ]);
-        session()->put('user_session_id', $session->id);
-
-        Livewire::test(DisplayNamePrompt::class)
-            ->set('displayName', 'John Doe')
-            ->call('saveDisplayName');
-
-        $this->user->refresh();
-        $this->assertNull($this->user->display_name);
+        $this->actingAs($user)
+            ->postJson('/session/display-name', ['displayName' => 'A'])
+            ->assertUnprocessable()
+            ->assertJsonStructure(['errors' => ['displayName']]);
     }
 }

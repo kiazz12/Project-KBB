@@ -3,17 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\UserSession;
 use App\Services\AuditService;
 use App\Services\SessionLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class AuthController extends Controller
 {
     public function loginForm()
     {
-        return view('admin.auth.login');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        if ($user && $user->isSuperAdmin()) {
+            return redirect()->intended(route('admin.dashboard'));
+        }
+
+        return Inertia::render('Admin/Auth/Login');
     }
 
     public function login(Request $request)

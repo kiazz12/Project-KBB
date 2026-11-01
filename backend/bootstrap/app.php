@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\TrackSessionActivity;
 use Illuminate\Auth\AuthenticationException;
@@ -26,6 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [
             TrackSessionActivity::class,
+        ]);
+
+        $middleware->web(append: [
+            HandleInertiaRequests::class,
         ]);
 
         $middleware->api(prepend: [

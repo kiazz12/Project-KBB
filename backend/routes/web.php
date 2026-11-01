@@ -17,6 +17,7 @@ Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/activity', [PageController::class, 'activity'])->name('dashboard.activity');
     Route::get('/forms', [PageController::class, 'formsIndex'])->name('forms.index');
     Route::get('/forms/create', [PageController::class, 'formsCreate'])->name('forms.create');
     Route::get('/forms/{form}', [PageController::class, 'formsShow'])->name('forms.show')->whereNumber('form');

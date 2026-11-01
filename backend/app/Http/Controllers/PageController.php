@@ -11,9 +11,11 @@ use App\Services\AuditService;
 use App\Services\NotificationService;
 use App\Support\Csv;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 
 class PageController extends Controller
@@ -24,7 +26,7 @@ class PageController extends Controller
             return redirect('/dashboard');
         }
 
-        return view('auth.login');
+        return Inertia::render('Login');
     }
 
     public function dashboard()
@@ -80,13 +82,145 @@ class PageController extends Controller
             ? Form::where('status', 'published')->whereHas('submissions')->count()
             : Form::where('user_id', $userId)->where('status', 'published')->whereHas('submissions')->count();
         $avgSubsPerForm = $totalForms > 0 ? round($totalSubmissions / $totalForms, 1) : 0;
+        $adminCount = $isSuper ? User::where('role', 'admin')->count() : null;
 
-        return view('dashboard.index', compact(
-            'totalForms', 'publishedForms', 'draftForms', 'closedForms',
-            'totalSubmissions', 'submissionsToday', 'submissionsThisWeek',
-            'totalUsers', 'recentForms', 'topForms', 'latestSubmissions',
-            'formsWithSubmissions', 'avgSubsPerForm'
-        ));
+        $mapForm = fn (Form $form): array => [
+            'id' => $form->id,
+            'title' => $form->title,
+            'status' => $form->status->value,
+            'status_label' => ucfirst($form->status->value),
+            'submissions_count' => $form->submissions_count ?? 0,
+            'fields_count' => $form->fields_count ?? null,
+            'owner' => $form->relationLoaded('user') ? $form->user?->name : null,
+            'url' => route('forms.show', $form),
+        ];
+
+        return Inertia::render('Dashboard', [
+            'stats' => [
+                'total_forms' => $totalForms,
+                'published_forms' => $publishedForms,
+                'draft_forms' => $draftForms,
+                'closed_forms' => $closedForms,
+                'total_submissions' => $totalSubmissions,
+                'submissions_today' => $submissionsToday,
+                'submissions_this_week' => $submissionsThisWeek,
+                'total_users' => $totalUsers,
+                'admin_count' => $adminCount,
+                'forms_with_submissions' => $formsWithSubmissions,
+                'avg_submissions_per_form' => $avgSubsPerForm,
+            ],
+            'recentForms' => $recentForms->map($mapForm)->values(),
+            'topForms' => $topForms->map($mapForm)->values(),
+            'latestSubmissions' => $latestSubmissions->map(fn (FormSubmission $submission): array => [
+                'id' => $submission->id,
+                'form_id' => $submission->form_id,
+                'form_title' => $submission->form?->title ?? 'Form dihapus',
+                'owner' => $submission->form?->user?->name,
+                'submitted_at' => $submission->submitted_at?->translatedFormat('l, d M Y H:i'),
+                'submitted_at_iso' => $submission->submitted_at?->toIso8601String(),
+                'url' => route('forms.submissions.index', $submission->form_id),
+            ])->values(),
+            'activity' => $this->activityData('7d'),
+            'today' => now()->translatedFormat('l, d F Y'),
+            'isSuperAdmin' => $isSuper,
+        ]);
+    }
+
+    public function activity(Request $request)
+    {
+        $range = (string) $request->query('range', '7d');
+
+        if (! in_array($range, ['7d', '1m', '3m', '6m', '1y'], true)) {
+            $range = '7d';
+        }
+
+        return response()->json($this->activityData($range));
+    }
+
+    /**
+     * @return array{labels: array<int, string>, data: array<int, int>, total: int, max: int}
+     */
+    private function activityData(string $range): array
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $isSuper = $user->isSuperAdmin();
+        $userId = Auth::id();
+
+        $now = now();
+        $start = match ($range) {
+            '7d' => $now->copy()->subDays(6)->startOfDay(),
+            '1m' => $now->copy()->subDays(29)->startOfDay(),
+            '3m' => $now->copy()->subDays(89)->startOfDay(),
+            '6m' => $now->copy()->subDays(179)->startOfDay(),
+            '1y' => $now->copy()->subDays(364)->startOfDay(),
+            default => $now->copy()->subDays(6)->startOfDay(),
+        };
+
+        $query = FormSubmission::query()->where('submitted_at', '>=', $start);
+        if (! $isSuper) {
+            $query->whereIn('form_id', Form::where('user_id', $userId)->select('id'));
+        }
+
+        $raw = [];
+        foreach ($query->pluck('submitted_at') as $submittedAt) {
+            if (! $submittedAt) {
+                continue;
+            }
+
+            $date = $submittedAt->format('Y-m-d');
+            $raw[$date] = ($raw[$date] ?? 0) + 1;
+        }
+
+        $labels = [];
+        $data = [];
+
+        if (in_array($range, ['7d', '1m'], true)) {
+            $period = $range === '7d' ? 7 : 30;
+            for ($i = $period - 1; $i >= 0; $i--) {
+                $date = $now->copy()->subDays($i);
+                $labels[] = $date->translatedFormat($range === '7d' ? 'D' : 'd M');
+                $data[] = $raw[$date->format('Y-m-d')] ?? 0;
+            }
+        } elseif ($range === '3m') {
+            for ($i = 12; $i >= 0; $i--) {
+                $weekStart = $now->copy()->subWeeks($i)->startOfWeek();
+                $weekEnd = $now->copy()->subWeeks($i)->endOfWeek();
+                $labels[] = $weekStart->translatedFormat('d M');
+
+                $count = 0;
+                $cursor = $weekStart->copy();
+                while ($cursor->lte($weekEnd) && $cursor->lte($now)) {
+                    $count += $raw[$cursor->format('Y-m-d')] ?? 0;
+                    $cursor->addDay();
+                }
+
+                $data[] = $count;
+            }
+        } else {
+            $months = $range === '6m' ? 6 : 12;
+            for ($i = $months - 1; $i >= 0; $i--) {
+                $month = $now->copy()->subMonths($i);
+                $labels[] = $month->translatedFormat('M Y');
+
+                $count = 0;
+                foreach ($raw as $dateString => $value) {
+                    $date = Carbon::parse($dateString);
+                    if ($date->betweenIncluded($month->copy()->startOfMonth(), $month->copy()->endOfMonth())) {
+                        $count += $value;
+                    }
+                }
+
+                $data[] = $count;
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $data,
+            'total' => array_sum($data),
+            'max' => max($data ?: [0]),
+        ];
     }
 
     public function formsIndex(Request $request)

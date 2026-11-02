@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'login_limit_error' => fn () => $request->session()->get('login_limit_error'),
                 'sessions_terminated' => fn () => $request->session()->get('sessions_terminated'),
+                'submitted' => fn () => $request->session()->get('submitted'),
             ],
         ];
     }

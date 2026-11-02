@@ -103,6 +103,23 @@ class PublicFormGuardrailsTest extends TestCase
         $this->assertDatabaseCount('form_submissions', 1);
     }
 
+    public function test_successful_submission_shares_confirmation_state(): void
+    {
+        $form = $this->makeForm();
+
+        $this->from('/form/'.$form->slug)
+            ->post('/form/'.$form->slug, ['responses' => []])
+            ->assertRedirect('/form/'.$form->slug)
+            ->assertSessionHas('submitted', true);
+
+        $this->get('/form/'.$form->slug)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('PublicForm')
+                ->where('flash.submitted', true)
+            );
+    }
+
     public function test_form_closed_after_page_load_rejects_submission(): void
     {
         $form = $this->makeForm();
